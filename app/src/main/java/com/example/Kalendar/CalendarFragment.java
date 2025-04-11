@@ -14,10 +14,9 @@ public class CalendarFragment extends Fragment {
 
     private LinearLayout calendarsContainer;
     private DrawerLayout drawerLayout;
-    private TextView dayInfoDate;
     private ImageView menuButton, addCalendarIcon;
-    private LinearLayout leftDrawer, rightDrawer;
-    private RecyclerView dayInfoTasks;
+    private LinearLayout leftDrawer;
+    private FrameLayout menuButtonContainer;
 
     @Nullable
     @Override
@@ -28,16 +27,26 @@ public class CalendarFragment extends Fragment {
 
         calendarsContainer = view.findViewById(R.id.calendarsContainer);
         drawerLayout = view.findViewById(R.id.drawerLayout);
-        dayInfoDate = view.findViewById(R.id.dayInfoDate);
-        dayInfoTasks = view.findViewById(R.id.dayInfoTasks);
         menuButton = view.findViewById(R.id.menuButton);
         addCalendarIcon = view.findViewById(R.id.addCalendarBtn);
         leftDrawer = view.findViewById(R.id.leftDrawer);
-        rightDrawer = view.findViewById(R.id.rightDrawer);
 
         addCalendarIcon.setOnClickListener(v -> addNewCalendar());
         menuButton.setOnClickListener(v -> toggleMenuDrawer());
+        menuButtonContainer = view.findViewById(R.id.menuButtonContainer);
 
+        drawerLayout.addDrawerListener(new DrawerLayout.DrawerListener() {
+            @Override
+            public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {
+                // смещаем кнопку в зависимости от слайда панели
+                float moveX = drawerView.getWidth() * slideOffset;
+                menuButtonContainer.setTranslationX(moveX);
+            }
+
+            @Override public void onDrawerOpened(@NonNull View drawerView) {}
+            @Override public void onDrawerClosed(@NonNull View drawerView) {}
+            @Override public void onDrawerStateChanged(int newState) {}
+        });
         setupWeekDays(view);
 
         return view;
@@ -55,7 +64,7 @@ public class CalendarFragment extends Fragment {
             View dayCircle = root.findViewById(dayIds[i]);
             int finalI = i;
 
-            dayCircle.setOnClickListener(v -> toggleDayInfoPanel(days[finalI]));
+            dayCircle.setOnClickListener(v -> openDayInfo(days[finalI]));
         }
     }
 
@@ -67,13 +76,8 @@ public class CalendarFragment extends Fragment {
         }
     }
 
-    private void toggleDayInfoPanel(String day) {
-        if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
-            dayInfoDate.setText(day);
-            drawerLayout.closeDrawer(GravityCompat.END);
-        } else {
-            drawerLayout.openDrawer(GravityCompat.END);
-        }
+    private void openDayInfo(String day) {
+        //
     }
 
     private void addNewCalendar() {

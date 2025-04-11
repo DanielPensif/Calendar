@@ -40,17 +40,23 @@
             </LinearLayout>
 
         </LinearLayout>
+        <FrameLayout
+            android:id="@+id/menuButtonContainer"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_gravity="bottom|start"
+            android:layout_margin="10dp"
+            android:background="@drawable/menu_background">
 
-
-        <ImageButton
-            android:id="@+id/menuButton"
-            android:src="@drawable/ic_menu"
-            android:background="?attr/selectableItemBackground"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:layout_gravity="left|bottom"
-            android:layout_marginBottom="10dp"
-            android:layout_marginLeft="10dp"/>
+            <ImageView
+                android:id="@+id/menuButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_menu"
+                android:padding="12dp"
+                android:scaleType="centerInside"
+                android:contentDescription="Меню" />
+        </FrameLayout>
     </FrameLayout>
 
 
@@ -89,29 +95,6 @@
             android:layout_width="match_parent"
             android:layout_height="55dp"
             android:layout_gravity="center_horizontal"/>
-    </LinearLayout>
-    <!-- Правая панель (drawer)-->
-    <LinearLayout
-        android:id="@+id/rightDrawer"
-        android:layout_width="200dp"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:background="@color/white"
-        android:layout_gravity="end"
-        android:padding="8dp">
-        <TextView
-            android:id="@+id/dayInfoDate"
-            android:text="ДАТА"
-            android:textSize="30sp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/dayInfoTasks"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:overScrollMode="never"
-            android:scrollbars="vertical"/>
+
     </LinearLayout>
 </androidx.drawerlayout.widget.DrawerLayout>

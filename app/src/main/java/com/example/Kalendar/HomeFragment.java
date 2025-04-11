@@ -61,8 +61,10 @@ public class HomeFragment extends Fragment {
         tasks.add(new Task("12:00", "Встреча", "Встреча с другом", false));
         tasks.add(new Task("13:00", "Обед", "Вкусный обед", true));
         tasks.add(new Task("14:00", "Пробежка", "Пробежка на улице", false));
-        tasks.add(new Task("17:00", "Занятие", "Поход в Станкин", false));
+        tasks.add(new Task("17:00", "Занятие", "Поход в Станкин фывфывфаывфывпыфвпаывпыпывацуфаыфвуавыапыкапеып", false));
         tasks.add(new Task("20:00", "Ужин", "Моя фантазия закончилась", false));
+        tasks.add(new Task("21:00", "Моя фантазия закончилась", "Моя фантазия закончилась", false));
+        tasks.add(new Task("23:00", "Спать", "Моя фантазия закончилась", false));
         return tasks;
     }
 
