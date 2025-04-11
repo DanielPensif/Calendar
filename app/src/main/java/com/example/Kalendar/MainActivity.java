@@ -1,79 +1,63 @@
 package com.example.Kalendar;
 
-import android.content.*;
-import android.os.*;
+import android.graphics.*;
+import android.os.Bundle;
 import android.widget.*;
-
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.*;
-
-import java.text.*;
-import java.util.*;
-
+import androidx.fragment.app.Fragment;
 
 public class MainActivity extends AppCompatActivity {
 
-    private RecyclerView tasksRecyclerView;
-    private TaskAdapter taskAdapter;
-    private TextView textTime, textDayMonth, textYear;
-    private final Handler timeHandler = new Handler();
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-    private final SimpleDateFormat dayMonthFormat = new SimpleDateFormat("dd MMMM", new Locale("ru"));
-    private final SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy", Locale.getDefault());
-
-    private final Runnable updateTimeRunnable = new Runnable() {
-        @Override
-        public void run() {
-            Calendar calendar = Calendar.getInstance();
-
-            textTime.setText(timeFormat.format(calendar.getTime()));
-            textDayMonth.setText(dayMonthFormat.format(calendar.getTime()));
-            textYear.setText(yearFormat.format(calendar.getTime()));
-
-            // Обновляем каждую секундк
-            timeHandler.postDelayed(this, 1000);
-        }
-    };
+    private LinearLayout navHomeContainer, navCalendarContainer;
+    private ImageView navHomeIcon, navCalendarIcon;
+    private TextView navHome, navCalendar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        textTime = findViewById(R.id.textTime);
-        textDayMonth = findViewById(R.id.textDayMonth);
-        textYear = findViewById(R.id.textYear);
+        navHomeContainer = findViewById(R.id.nav_home_container);
+        navCalendarContainer = findViewById(R.id.nav_calendar_container);
+        navHome = findViewById(R.id.nav_home);
+        navCalendar = findViewById(R.id.nav_calendar);
+        navHomeIcon = findViewById(R.id.nav_home_icon);
+        navCalendarIcon = findViewById(R.id.nav_calendar_icon);
 
-        updateTimeRunnable.run();
+        // начальный экран
+        selectTab("home");
+        loadFragment(new HomeFragment());
+        navHomeContainer.setOnClickListener(v -> {
+            selectTab("home");
+            loadFragment(new HomeFragment());
+        });
 
-        tasksRecyclerView = findViewById(R.id.tasksRecyclerView);
-        tasksRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        taskAdapter = new TaskAdapter(getTodayTasks());
-        tasksRecyclerView.setAdapter(taskAdapter);
-
-        findViewById(R.id.dailyTasksTitle).setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, CalendarActivity.class);
-            startActivity(intent);
+        navCalendarContainer.setOnClickListener(v -> {
+            selectTab("calendar");
+            loadFragment(new CalendarFragment());
         });
     }
 
-    private List<Task> getTodayTasks() {
-        // Тестовые задачи, пока просто для проверки ресуслер вью
-        List<Task> tasks = new ArrayList<>();
-        tasks.add(new Task("08:00", "Завтрак", "Плотный завтрак", false));
-        tasks.add(new Task("10:00", "Прогулка", "Прогулка с собакой", true));
-        tasks.add(new Task("12:00", "Встреча", "Встреча с другом", false));
-        tasks.add(new Task("13:00", "Обед", "Вкусный обед", true));
-        tasks.add(new Task("14:00", "Пробежка", "Пробежка на улице", false));
-        tasks.add(new Task("17:00", "Занятие", "Поход на занятие в Станкин аыварыврдылрадлфыраврфылдвар", false));
-        tasks.add(new Task("20:00", "Ужин", "Моя фанатазия закончилась", false));
-        tasks.add(new Task("22:00", "Моя фанатазия закончилась", "Моя фанатазия закончилась", true));
-        tasks.add(new Task("23:00", "Спать", "Моя фанатазия закончилась", false));
-        return tasks;
+    private void selectTab(String tab) {
+        // сброс цветов
+        navHome.setTextColor(Color.parseColor("#888888"));
+        navCalendar.setTextColor(Color.parseColor("#888888"));
+        navHomeIcon.setColorFilter(Color.parseColor("#888888"));
+        navCalendarIcon.setColorFilter(Color.parseColor("#888888"));
+
+        if (tab.equals("home")) {
+            navHome.setTextColor(Color.BLACK);
+            navHomeIcon.setColorFilter(Color.BLACK);
+        } else if (tab.equals("calendar")) {
+            navCalendar.setTextColor(Color.BLACK);
+            navCalendarIcon.setColorFilter(Color.BLACK);
+        }
     }
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        timeHandler.removeCallbacks(updateTimeRunnable);
+
+    private void loadFragment(Fragment fragment) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commit();
     }
 }
