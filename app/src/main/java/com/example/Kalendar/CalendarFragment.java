@@ -1,5 +1,6 @@
 package com.example.Kalendar;
 
+import android.content.Intent;
 import android.os.*;
 import android.view.*;
 import android.widget.*;
@@ -8,7 +9,6 @@ import androidx.annotation.Nullable;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.RecyclerView;
 
 public class CalendarFragment extends Fragment {
 
@@ -77,7 +77,9 @@ public class CalendarFragment extends Fragment {
     }
 
     private void openDayInfo(String day) {
-        //
+        Intent intent = new Intent(getContext(), DayInfoFull.class);
+        intent.putExtra("date", day);
+        startActivity(intent);
     }
 
     private void addNewCalendar() {

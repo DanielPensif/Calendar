@@ -1,5 +1,4 @@
 package com.example.Kalendar;
-
 import android.view.*;
 import android.widget.*;
 
@@ -7,7 +6,6 @@ import androidx.annotation.*;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.*;
-
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
 
     private List<Task> tasks;
@@ -26,9 +24,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     @Override
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
         Task task = tasks.get(position);
-        holder.timeText.setText(task.time);
-        holder.titleText.setText(task.title);
-        holder.descriptionText.setText(task.description);
+        holder.timeText.setText(task.getTime());
+        holder.titleText.setText(task.getTitle());
+        holder.descriptionText.setText(task.getDescription());
         holder.doneButton.setImageResource(task.isDone ? R.drawable.ic_check_done : R.drawable.ic_check);
         holder.doneButton.setOnClickListener(v -> {
             task.isDone = !task.isDone;
@@ -55,4 +53,3 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         }
     }
 }
-
