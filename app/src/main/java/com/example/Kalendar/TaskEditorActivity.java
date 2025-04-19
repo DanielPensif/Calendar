@@ -21,6 +21,7 @@ public class TaskEditorActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_editor);
 
+        List<Task> tasks = getIntent().getParcelableArrayListExtra("tasks_list");
         recyclerView = findViewById(R.id.taskEditorList);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(new TaskAdapter(getSampleTasks()));

@@ -10,8 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class EventEditorActivity extends AppCompatActivity {
 
@@ -26,15 +25,16 @@ public class EventEditorActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_event_editor);
 
-        recyclerView = findViewById(R.id.taskEditorList);
+        ArrayList<Event> events = getIntent(). getParcelableArrayListExtra("events_list");
+        recyclerView = findViewById(R.id.eventEditorList);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(new TaskAdapter(getSampleTasks()));
 
-        addEventButton = findViewById(R.id.addTaskButton);
-        titleInput = findViewById(R.id.taskTitleInput);
-        descInput = findViewById(R.id.taskDescInput);
-        timeInput = findViewById(R.id.taskTimeInput);
-        notifyCheck = findViewById(R.id.taskNotifyCheck);
+        addEventButton = findViewById(R.id.addEventButton);
+        titleInput = findViewById(R.id.eventTitleInput);
+        descInput = findViewById(R.id.eventDescInput);
+        timeInput = findViewById(R.id.eventTimeInput);
+        notifyCheck = findViewById(R.id.eventNotifyCheck);
 
         addEventButton.setOnClickListener(v -> {
             // пока не реализуем логику добавления

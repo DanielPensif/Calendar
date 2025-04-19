@@ -6,7 +6,7 @@
     android:background="@android:color/white">
 
     <TextView
-        android:text="Список задач"
+        android:text="Список событий"
         android:textSize="20sp"
         android:textColor="#1E88E5"
         android:layout_width="wrap_content"
@@ -14,7 +14,7 @@
         android:layout_marginBottom="12dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/taskEditorList"
+        android:id="@+id/eventEditorList"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -23,10 +23,10 @@
         android:scrollbars="vertical" />
 
     <Button
-        android:id="@+id/addTaskButton"
+        android:id="@+id/addEventButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="➕ Добавить задачу"
+        android:text="➕ Добавить событие"
         android:textColor="#FFFFFF"
         android:backgroundTint="#1E88E5"
         android:layout_marginTop="12dp"/>
@@ -41,25 +41,25 @@
         android:layout_height="wrap_content">
 
         <EditText
-            android:id="@+id/taskTitleInput"
-            android:hint="Название задачи"
+            android:id="@+id/eventTitleInput"
+            android:hint="Название события"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
         <EditText
-            android:id="@+id/taskDescInput"
+            android:id="@+id/eventDescInput"
             android:hint="Описание"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
         <EditText
-            android:id="@+id/taskTimeInput"
+            android:id="@+id/eventTimeInput"
             android:hint="Время или период (например, 10:00–11:00)"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
         <CheckBox
-            android:id="@+id/taskNotifyCheck"
+            android:id="@+id/eventNotifyCheck"
             android:text="Уведомление"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
@@ -73,7 +73,9 @@
             <TextView
                 android:text="Категория:"
                 android:layout_gravity="center_vertical"
-                android:layout_marginEnd="8dp"/>
+                android:layout_marginEnd="8dp"
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"/>
 
             <View
                 android:id="@+id/categoryColor"
@@ -83,7 +85,9 @@
                 android:layout_marginEnd="4dp"/>
             <TextView
                 android:text="Работа"
-                android:textColor="#1E88E5"/>
+                android:textColor="#1E88E5"
+                android:layout_height="match_parent"
+                 android:layout_width="wrap_content"/>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
