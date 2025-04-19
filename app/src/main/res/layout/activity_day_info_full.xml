@@ -20,7 +20,8 @@
 
  <!-- Заголовок Events -->
  <TextView
-     android:layout_width="wrap_content"
+     android:id="@+id/eventsTextView"
+     android:layout_width="match_parent"
      android:layout_height="wrap_content"
      android:text="События"
      android:textSize="20sp"
@@ -41,7 +42,8 @@
 
  <!-- Заголовок Tasks -->
  <TextView
-     android:layout_width="wrap_content"
+     android:id="@+id/tasksTextView"
+     android:layout_width="match_parent"
      android:layout_height="wrap_content"
      android:text="Задачи"
      android:textSize="20sp"

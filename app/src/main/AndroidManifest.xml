@@ -13,6 +13,12 @@
         android:theme="@style/Theme.КалендарьЗадач"
         tools:targetApi="31">
         <activity
+            android:name=".EventEditorActivity"
+            android:exported="false" />
+        <activity
+            android:name=".TaskEditorActivity"
+            android:exported="false" />
+        <activity
             android:name=".DayInfoFull"
             android:exported="false" />
         <activity
