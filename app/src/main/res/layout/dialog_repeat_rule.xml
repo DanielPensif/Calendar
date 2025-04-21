@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="20dp"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Частота -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Повторять"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerFreq"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <!-- Интервал -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Интервал (через сколько повторять)"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="4dp"/>
+
+        <EditText
+            android:id="@+id/inputInterval"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:hint="Например: 1"/>
+
+        <!-- Окончание -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Завершить повторение"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="4dp"/>
+
+        <RadioGroup
+            android:id="@+id/radioEndGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/radioNever"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Никогда"
+                android:checked="true"/>
+
+            <RadioButton
+                android:id="@+id/radioCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="После N повторов"/>
+
+            <RadioButton
+                android:id="@+id/radioUntil"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="До даты"/>
+        </RadioGroup>
+
+        <!-- Кол-во повторов -->
+        <EditText
+            android:id="@+id/inputCount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Например: 10"
+            android:inputType="number"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"/>
+
+        <!-- Дата окончания -->
+        <Button
+            android:id="@+id/btnPickDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Выбрать дату"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"/>
+
+        <!-- Кнопка подтверждения -->
+        <Button
+            app:backgroundTint="@color/teal_700"
+            android:id="@+id/btnDone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Готово"
+            android:layout_marginTop="20dp"/>
+    </LinearLayout>
+</ScrollView>
+

@@ -1,0 +1,150 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/white"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:fitsSystemWindows="true">
+
+    <!-- Заголовок с месяцем -->
+    <LinearLayout
+        android:id="@+id/monthHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp">
+
+        <LinearLayout
+            android:id="@+id/prevMonthContainer"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="0.3"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless">
+
+            <ImageButton
+                android:id="@+id/prevMonthBtn"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_arrow_left"
+                android:background="@android:color/transparent"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/monthTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:text="Апрель 2025"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:paddingHorizontal="4dp" />
+
+        <LinearLayout
+            android:id="@+id/nextMonthContainer"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:gravity="center"
+            android:clickable="true"
+            android:layout_weight="0.3"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless">
+
+            <ImageButton
+                android:id="@+id/nextMonthBtn"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_arrow_right"
+                android:background="@android:color/transparent"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+    <!-- Строка дней недели -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="7"
+        android:paddingBottom="4dp">
+
+        <TextView style="@style/CalendarDayLabel" android:text="Пн"/>
+        <TextView style="@style/CalendarDayLabel" android:text="Вт"/>
+        <TextView style="@style/CalendarDayLabel" android:text="Ср"/>
+        <TextView style="@style/CalendarDayLabel" android:text="Чт"/>
+        <TextView style="@style/CalendarDayLabel" android:text="Пт"/>
+        <TextView style="@style/CalendarDayLabel" android:text="Сб"/>
+        <TextView style="@style/CalendarDayLabel" android:text="Вс"/>
+    </LinearLayout>
+
+    <!-- Сетка календаря -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/FloatingActionButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_plus"
+        app:tint="@android:color/white"
+        app:backgroundTint="@color/teal_700"/>
+
+    <!-- Информация о выбранном календаре -->
+    <LinearLayout
+        android:id="@+id/calendarInfoBlock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="160dp"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="#F7F7F7"
+        android:layout_marginTop="8dp">
+
+
+        <!-- Выбор календаря -->
+        <Spinner
+            android:id="@+id/calendarSelector"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- Цитата дня -->
+        <TextView
+            android:id="@+id/quoteOfDay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Каждый день — это новый шанс."
+            android:textStyle="italic"
+            android:textColor="#666666"
+            android:padding="4dp"
+            android:textSize="14sp"/>
+
+        <!-- Стрик -->
+        <TextView
+            android:id="@+id/streakText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔥 Стрик: 0 дней"
+            android:textStyle="bold"
+            android:textColor="#444444"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp"/>
+    </LinearLayout>
+
+</LinearLayout>

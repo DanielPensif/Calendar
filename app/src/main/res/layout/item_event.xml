@@ -1,0 +1,55 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#F4F4F4"
+    android:padding="12dp"
+    android:layout_marginVertical="4dp"
+    android:layout_marginHorizontal="8dp"
+    android:elevation="2dp">
+
+    <TextView
+        android:id="@+id/eventTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="13:00 – 14:00"
+        android:textColor="#666666"
+        android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/eventTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Название события"
+        android:textSize="16sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/eventSeriesInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Повторяющееся событие"
+        android:textSize="12sp"
+        android:textColor="#AA8844"
+        android:layout_marginTop="4dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/eventCategory"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Категория: Встреча"
+        android:textSize="12sp"
+        android:textColor="#888888"
+        android:layout_marginTop="4dp"/>
+
+    <TextView
+        android:id="@+id/eventDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Описание события..."
+        android:textSize="13sp"
+        android:layout_marginTop="2dp"
+        android:maxLines="2"
+        android:ellipsize="end"/>
+</LinearLayout>
