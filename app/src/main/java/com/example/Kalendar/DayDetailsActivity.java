@@ -2,6 +2,7 @@ package com.example.Kalendar;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -17,50 +18,48 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 import org.threeten.bp.LocalDate;
+import org.threeten.bp.format.DateTimeFormatter;
 
 import java.util.Objects;
+import java.util.Locale;
 
 public class DayDetailsActivity extends AppCompatActivity {
 
     private LocalDate selectedDate;
+    private TextView dateHeader;
     private TabLayout tabLayout;
     private DayPagerAdapter adapter;
 
     private AddEventDialogFragment eventDialog;
     private AddTaskDialogFragment taskDialog;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_day_details);
 
+        // Получаем дату из интента
         String dateStr = getIntent().getStringExtra("date");
-        selectedDate = LocalDate.parse(Objects.requireNonNull(dateStr));;
+        selectedDate = LocalDate.parse(Objects.requireNonNull(dateStr));
 
+        // Инициализируем заголовок с датой
+        dateHeader = findViewById(R.id.dateHeader);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", new Locale("ru"));
+        dateHeader.setText(selectedDate.format(formatter));
+
+        // Диалоги добавления
         eventDialog = AddEventDialogFragment.newInstance(selectedDate);
         eventDialog.setOnEventSavedListener(() -> {
             int tab = tabLayout.getSelectedTabPosition();
-            if (adapter == null) {
-                return;
-            }
-            if (tab == 0) {
-                Fragment fragment = getSupportFragmentManager()
-                        .findFragmentByTag("f" + tab);
-                if (fragment instanceof TasksFragment) {
-                    ((TasksFragment) fragment).refresh();
-                }
-            }
-            else if (tab == 1) {
-                Fragment fragment = getSupportFragmentManager()
-                        .findFragmentByTag("f" + tab);
-                if (fragment instanceof EventsFragment) {
-                    ((EventsFragment) fragment).refresh();
-                }
+            Fragment fragment = getSupportFragmentManager().findFragmentByTag("f" + tab);
+            if (fragment instanceof TasksFragment && tab == 0) {
+                ((TasksFragment) fragment).refresh();
+            } else if (fragment instanceof EventsFragment && tab == 1) {
+                ((EventsFragment) fragment).refresh();
             }
         });
 
-
+        // ViewPager и вкладки
         ViewPager2 viewPager = findViewById(R.id.viewPager);
         tabLayout = findViewById(R.id.tabLayout);
         FloatingActionButton fab = findViewById(R.id.fab);
@@ -71,14 +70,19 @@ public class DayDetailsActivity extends AppCompatActivity {
         new TabLayoutMediator(tabLayout, viewPager,
                 (tab, position) -> tab.setText(position == 0 ? "Задачи" : "События")
         ).attach();
+
         tabLayout.setBackgroundColor(Color.WHITE);
+
+        // Обработка нажатия FAB
         fab.setOnClickListener(v -> {
             int tab = tabLayout.getSelectedTabPosition();
             if (tab == 0) {
                 taskDialog = AddTaskDialogFragment.newInstance(selectedDate);
                 taskDialog.setOnTaskSavedListener(() -> {
                     Fragment f = getSupportFragmentManager().findFragmentByTag("f0");
-                    if (f instanceof TasksFragment) ((TasksFragment) f).refresh();
+                    if (f instanceof TasksFragment) {
+                        ((TasksFragment) f).refresh();
+                    }
                 });
                 taskDialog.show(getSupportFragmentManager(), "addTask");
             } else {
@@ -86,7 +90,6 @@ public class DayDetailsActivity extends AppCompatActivity {
                 eventDialog.setPreselectedCalendarId(calendarId);
                 eventDialog.show(getSupportFragmentManager(), "addEvent");
             }
-
         });
     }
 }

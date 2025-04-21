@@ -11,6 +11,18 @@
         android:layout_height="wrap_content"
         android:background="@color/white">
 
+        <!-- Заголовок с датой -->
+        <TextView
+            android:id="@+id/dateHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="21 апреля 2025"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:gravity="center" />
+
+        <!-- Вкладки -->
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabLayout"
             android:layout_width="match_parent"
