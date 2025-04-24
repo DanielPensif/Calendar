@@ -125,7 +125,7 @@ public class CompleteTaskDialogFragment extends DialogFragment {
         }).start();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Завершение задачи");
+        // завершение задачи
         builder.setView(view);
         builder.setPositiveButton("Сохранить", null);  // мы перехватим вручную
         builder.setNegativeButton("Отмена", null);

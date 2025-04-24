@@ -19,9 +19,6 @@
             android:name=".DayDetailsActivity"
             android:exported="false" />
         <activity
-            android:name=".DayInfoFull"
-            android:exported="false" />
-        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

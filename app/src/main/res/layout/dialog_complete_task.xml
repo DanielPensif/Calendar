@@ -11,13 +11,25 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Заголовок -->
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Завершение задачи"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:layout_marginBottom="16dp"
+            android:textColor="@android:color/black" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Оценка выполнения"
             android:textStyle="bold"
             android:textSize="16sp"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="8dp"
+            android:textColor="@color/dark_gray"/>
 
         <RatingBar
             android:id="@+id/ratingBar"
@@ -28,7 +40,6 @@
             android:rating="5"
             android:theme="@style/RatingBar.Gold" />
 
-
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -36,7 +47,8 @@
             android:textStyle="bold"
             android:textSize="16sp"
             android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="8dp"
+            android:textColor="@android:color/black"/>
 
         <RadioGroup
             android:id="@+id/onTimeGroup"
@@ -49,14 +61,18 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Да" />
+                android:text="Да"
+                android:textColor="@color/black"
+                android:outlineSpotShadowColor="@color/black"/>
 
             <RadioButton
                 android:id="@+id/radioNo"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Нет" />
+                android:text="Нет"
+                android:textColor="@color/black"
+                android:outlineSpotShadowColor="@color/black"/>
         </RadioGroup>
 
         <TextView
@@ -79,7 +95,8 @@
             android:layout_height="wrap_content"
             android:text="Комментарий к выполнению"
             android:layout_marginTop="16dp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:textColor="@color/dark_gray"/>
 
         <EditText
             android:id="@+id/commentInput"
@@ -88,14 +105,16 @@
             android:hint="Что получилось, а что нет?"
             android:minLines="3"
             android:gravity="top|start"
-            android:background="@android:drawable/editbox_background"/>
+            android:background="@android:drawable/editbox_background"
+            android:textColor="@color/black"/>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Дата и время завершения"
             android:layout_marginTop="16dp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:textColor="@color/black"/>
 
         <LinearLayout
             android:orientation="horizontal"
@@ -110,14 +129,14 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 app:backgroundTint="@color/teal_700"
-                android:text="Выбрать дату" />
+                android:text="Выбрать дату"
+                android:textColor="@color/white"/>
 
             <TimePicker
                 android:id="@+id/timePicker"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:timePickerMode="spinner"/>
-
+                android:timePickerMode="spinner" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>
