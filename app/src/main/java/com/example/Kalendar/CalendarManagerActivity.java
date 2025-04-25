@@ -13,10 +13,10 @@ import android.widget.*;
 import com.flask.colorpicker.ColorPickerView;
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
 
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar; // Добавлен импорт
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -36,6 +36,15 @@ public class CalendarManagerActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_calendar_manager);
+
+        // Добавляем Toolbar
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         db = AppDatabase.getDatabase(this);
 
@@ -57,7 +66,6 @@ public class CalendarManagerActivity extends AppCompatActivity {
             List<CalendarEntity> all = db.calendarDao().getAll();
             calendarList.clear();
             calendarList.addAll(all);
-
             runOnUiThread(() -> adapter.notifyDataSetChanged());
         }).start();
     }
@@ -92,8 +100,6 @@ public class CalendarManagerActivity extends AppCompatActivity {
                     .show();
         });
 
-
-
         layout.addView(input);
         builder.setView(layout);
         layout.addView(colorPickerBtn);
@@ -101,6 +107,7 @@ public class CalendarManagerActivity extends AppCompatActivity {
         builder.setPositiveButton("Создать", (dialog, which) -> {
             String title = input.getText().toString().trim();
             CalendarEntity entity = new CalendarEntity(title, System.currentTimeMillis(), selectedColor[0]);
+
 
             new Thread(() -> {
                 db.calendarDao().insert(entity);
@@ -150,8 +157,14 @@ public class CalendarManagerActivity extends AppCompatActivity {
                 }
 
                 TextWatcher watcher = new TextWatcher() {
-                    @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                    @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                    @Override
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                    }
+
+                    @Override
+                    public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    }
+
                     @Override
                     public void afterTextChanged(Editable s) {
                         String newTitle = s.toString().trim();
@@ -176,6 +189,7 @@ public class CalendarManagerActivity extends AppCompatActivity {
                     new AlertDialog.Builder(CalendarManagerActivity.this)
                             .setTitle("Удалить календарь?")
                             .setMessage("Это удалит все связанные с ним данные.")
+                            .setIcon(android.R.drawable.ic_dialog_alert)
                             .setPositiveButton("Удалить", (dialog, which) -> {
                                 new Thread(() -> {
                                     db.calendarDao().delete(calendar);
@@ -189,9 +203,8 @@ public class CalendarManagerActivity extends AppCompatActivity {
                             .show();
                 });
             }
-
-
         }
+
 
         @NonNull
         @Override
@@ -241,6 +254,4 @@ public class CalendarManagerActivity extends AppCompatActivity {
         super.onResume();
         loadCalendars();
     }
-
-
 }
