@@ -13,47 +13,39 @@
         android:orientation="vertical"
         android:gravity="center_horizontal">
 
-        <!-- Profile Image -->
         <ImageView
-            android:id="@+id/profileImageView"
+            android:id="@+id/profileImage"
             android:layout_width="120dp"
             android:layout_height="120dp"
-            android:layout_marginTop="16dp"
-            android:src="@drawable/ic_profile_placeholder"
             android:scaleType="centerCrop"
             android:background="@drawable/profile_image_circle"
-            android:contentDescription="Profile photo" />
+            android:padding="4dp"
+            android:layout_marginBottom="16dp" />
 
-        <!-- Full Name -->
         <TextView
-            android:id="@+id/fullNameTextView"
+            android:id="@+id/profileName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Имя пользователя"
-            android:textStyle="bold"
             android:textSize="20sp"
-            android:layout_marginTop="16dp" />
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
-        <!-- Username -->
         <TextView
-            android:id="@+id/usernameTextView"
+            android:id="@+id/profileNickname"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=" @username"
-            android:textColor="#888888"
+            android:text=" @nickname"
             android:textSize="16sp"
-            android:layout_marginTop="4dp" />
+            android:layout_marginBottom="8dp" />
 
-        <!-- Bio / Description -->
         <TextView
-            android:id="@+id/bioTextView"
-            android:layout_width="match_parent"
+            android:id="@+id/profileDescription"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Описание профиля"
-            android:textAlignment="center"
-            android:textSize="16sp"
-            android:layout_marginTop="12dp"
-            android:paddingHorizontal="12dp" />
+            android:textSize="14sp"
+            android:textColor="@color/black" />
 
         <!-- Buttons -->
         <LinearLayout
