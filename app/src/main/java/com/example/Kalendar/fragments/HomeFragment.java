@@ -2,11 +2,11 @@ package com.example.Kalendar.fragments;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+
 import android.view.*;
 import android.widget.Button;
 import android.widget.TextView;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.*;
 
@@ -19,19 +19,20 @@ import com.example.Kalendar.models.EventEntity;
 import com.example.Kalendar.models.TaskEntity;
 import com.example.Kalendar.utils.EventUtils;
 
-import org.threeten.bp.Instant;
-import org.threeten.bp.LocalDate;
-import org.threeten.bp.LocalTime;
-import org.threeten.bp.ZoneId;
+import org.json.*;
+import org.json.JSONObject;
+import org.threeten.bp.*;
 import org.threeten.bp.format.DateTimeFormatter;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.function.*;
+
+import okhttp3.*;
 
 public class HomeFragment extends Fragment {
 
     private TextView textTime, textDayMonth, textEmpty, textAllDone, textQuote;
-
-    private String lastQuote = "";
 
     private HomeAdapter homeAdapter;
     private final List<HomeItem> homeItems = new ArrayList<>();
@@ -57,15 +58,12 @@ public class HomeFragment extends Fragment {
         textDayMonth = view.findViewById(R.id.textDayMonth);
 
         textQuote = view.findViewById(R.id.textQuote);
-        textQuote.setText(getQuoteForToday());
+        getQuoteForToday(quote -> {textQuote.setText(quote);});
 
         Button btnNewQuote = view.findViewById(R.id.btnNewQuote);
-        textQuote.setText(getQuoteForToday());
 
         btnNewQuote.setOnClickListener(v -> {
-            String newQuote = getRandomQuoteDifferentFromLast();
-            textQuote.setText(newQuote);
-            lastQuote = newQuote;
+            getQuoteForToday(quote -> {});
         });
 
         updateDateTime();
@@ -205,38 +203,39 @@ public class HomeFragment extends Fragment {
         textTime.setText(time.format(timeFormatter));
     }
 
-    private String getQuoteForToday() {
-        List<String> quotes = Arrays.asList(
-                "Ты можешь больше, чем думаешь.",
-                "Каждое великое достижение начинается с решения попробовать.",
-                "Прогресс — лучше, чем совершенство.",
-                "Делай сегодня то, что другие не хотят — завтра будешь жить так, как другие не могут.",
-                "Секрет продвижения вперёд в том, чтобы начать.",
-                "Не откладывай мечты. Сделай первый шаг."
-        );
+    private void getQuoteForToday(Consumer<String> callback) {
+        OkHttpClient client = new OkHttpClient();
 
-        int dayOfYear = LocalDate.now().getDayOfYear();
-        return quotes.get(dayOfYear % quotes.size());
+        Request request = new Request.Builder()
+                .url("http://api.forismatic.com/api/1.0/?method=getQuote&format=json&lang=ru")
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    String responseData = response.body().string();
+                    try {
+                        JSONObject jsonObject = new JSONObject(responseData);
+                        String quote = jsonObject.getString("quoteText");
+
+                        requireActivity().runOnUiThread(() -> {
+                            textQuote.setText(quote);
+                        });
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull okhttp3.Call call, @NonNull IOException e) {
+                // Обработка ошибки сети
+                e.printStackTrace();
+                callback.accept("Не удалось загрузить цитату. Попробуйте позже.");
+            }
+        });
     }
-
-    private String getRandomQuoteDifferentFromLast() {
-        List<String> quotes = Arrays.asList(
-                "Ты можешь больше, чем думаешь.",
-                "Каждое великое достижение начинается с решения попробовать.",
-                "Прогресс — лучше, чем совершенство.",
-                "Делай сегодня то, что другие не хотят — завтра будешь жить так, как другие не могут.",
-                "Секрет продвижения вперёд в том, чтобы начать.",
-                "Не откладывай мечты. Сделай первый шаг."
-        );
-
-        Random rand = new Random();
-        String quote;
-        do {
-            quote = quotes.get(rand.nextInt(quotes.size()));
-        } while (quote.equals(lastQuote));
-
-        return quote;
-    }
-
 
 }
