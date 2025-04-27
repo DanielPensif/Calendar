@@ -6,20 +6,20 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.Kalendar.R;
-import com.example.Kalendar.models.CompletedDay;
+import com.example.Kalendar.adapters.HistoryItem;
 import java.util.List;
 
 public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHolder> {
 
-    private final List<CompletedDay> days;
+    private final List<HistoryItem> items;
     private final OnAwardClickListener listener;
 
     public interface OnAwardClickListener {
         void onAwardClick(int position);
     }
 
-    public HistoryAdapter(List<CompletedDay> days, OnAwardClickListener listener) {
-        this.days = days;
+    public HistoryAdapter(List<HistoryItem> items, OnAwardClickListener listener) {
+        this.items = items;
         this.listener = listener;
     }
 
@@ -32,8 +32,9 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        CompletedDay day = days.get(position);
-        holder.dayText.setText(day.getDate());
+        HistoryItem item = items.get(position);
+        holder.dateText.setText(item.dateFormatted);
+        holder.calendarText.setText(item.calendarName);
 
         holder.itemView.setBackgroundResource(R.drawable.completed_day_background);
 
@@ -42,15 +43,16 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
     @Override
     public int getItemCount() {
-        return days.size();
+        return items.size();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView dayText;
+        TextView dateText, calendarText;
 
         ViewHolder(View itemView) {
             super(itemView);
-            dayText = itemView.findViewById(R.id.dayText);
+            dateText = itemView.findViewById(R.id.dayText);
+            calendarText = itemView.findViewById(R.id.calendarText);
         }
     }
 }

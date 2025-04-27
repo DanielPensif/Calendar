@@ -16,6 +16,9 @@ public interface CalendarDao {
     @Query("SELECT * FROM calendars")
     List<CalendarEntity> getAll();
 
+    @Query("SELECT * FROM calendars WHERE id = :id LIMIT 1")
+    CalendarEntity getCalendarById(int id);
+
     @androidx.room.Update
     void update(CalendarEntity calendar);
 

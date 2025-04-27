@@ -73,7 +73,9 @@
                 android:id="@+id/nav_profile_icon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_profile" />
+                android:src="@drawable/ic_profile"
+                android:clickable="true"
+                android:focusable="true"/>
             <TextView
                 android:id="@+id/nav_profile"
                 android:layout_width="wrap_content"
