@@ -26,6 +26,9 @@ public interface TaskDao {
     @Query("SELECT * FROM tasks WHERE dayId = :dayId")
     List<TaskEntity> getTasksByDayId(int dayId);
 
+    @Query("SELECT * FROM tasks")
+    List<TaskEntity> getAllTasks();
+
     @Update
     void update(TaskEntity task);
 

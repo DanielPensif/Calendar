@@ -30,6 +30,7 @@ import org.threeten.bp.Instant;
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CalendarFragment extends Fragment {
 
@@ -387,42 +388,80 @@ public class CalendarFragment extends Fragment {
 
     }
 
-
     private void updateStreak() {
         new Thread(() -> {
-            List<DayEntity> days;
-            if (currentCalendarId == -1) {
-                days = db.dayDao().getAll();
-            } else {
-                days = db.dayDao().getByCalendarId(currentCalendarId);
+            List<CalendarEntity> allCalendars = db.calendarDao().getAll();
+            Map<Integer, Integer> calendarStreaks = new HashMap<>();
+
+            // Сегодняшний день в 00:00
+            Calendar today = Calendar.getInstance();
+            today.set(Calendar.HOUR_OF_DAY, 0);
+            today.set(Calendar.MINUTE, 0);
+            today.set(Calendar.SECOND, 0);
+            today.set(Calendar.MILLISECOND, 0);
+
+            // Проходим по каждому календарю
+            for (CalendarEntity calendar : allCalendars) {
+                List<DayEntity> calendarDays = db.dayDao().getByCalendarId(calendar.id);
+
+                // Сортируем дни календаря по убыванию даты
+                calendarDays.sort((d1, d2) -> Long.compare(d2.timestamp, d1.timestamp));
+
+                int streak = 0;
+                Calendar checkDay = (Calendar) today.clone();
+                boolean continueStreak = true;
+
+                while (continueStreak) {
+                    boolean found = false;
+
+                    for (DayEntity day : calendarDays) {
+                        Calendar dayCalendar = Calendar.getInstance();
+                        dayCalendar.setTimeInMillis(day.timestamp);
+                        dayCalendar.set(Calendar.HOUR_OF_DAY, 0);
+                        dayCalendar.set(Calendar.MINUTE, 0);
+                        dayCalendar.set(Calendar.SECOND, 0);
+                        dayCalendar.set(Calendar.MILLISECOND, 0);
+
+                        if (dayCalendar.getTimeInMillis() == checkDay.getTimeInMillis()) {
+                            found = true;
+                            List<TaskEntity> tasks = db.taskDao().getTasksForDay(day.id);
+
+                            boolean hasTasks = !tasks.isEmpty();
+                            boolean allTasksDone = tasks.stream().allMatch(t -> t.done);
+
+                            if (hasTasks && allTasksDone) {
+                                streak++;
+                            } else {
+                                continueStreak = false;
+                            }
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        continueStreak = false;
+                    }
+
+                    checkDay.add(Calendar.DAY_OF_YEAR, -1);
+                }
+
+                calendarStreaks.put(calendar.id, streak);
             }
 
-            int streak = 0;
+            // Теперь считаем глобальный стрик как минимальный среди всех календарей
+            int globalStreak = calendarStreaks.isEmpty() ? 0 :
+                    calendarStreaks.values().stream().min(Integer::compare).orElse(0);
 
-            days.sort((d1, d2) -> Long.compare(d2.timestamp, d1.timestamp));
+            int currentStreak = currentCalendarId == -1 ? globalStreak :
+                    calendarStreaks.getOrDefault(currentCalendarId, 0);
 
-            for (DayEntity day : days) {
-                List<TaskEntity> tasks = db.taskDao().getTasksForDay(day.id);
-                List<EventEntity> events = db.eventDao().getEventsForDay(day.id);
-
-                boolean hasTasks = !tasks.isEmpty();
-                boolean allTasksDone = tasks.stream().allMatch(t -> t.done);
-
-                boolean hasEvents = !events.isEmpty();
-                boolean allEventsDone = events.stream().allMatch(e -> e.done);
-
-                boolean allDone = (hasTasks && allTasksDone) || (hasEvents && allEventsDone);
-
-                if (allDone) streak++;
-                else break;
-            }
-
-            final int finalStreak = streak;
-            requireActivity().runOnUiThread(() ->
-                    streakText.setText("🔥 Стрик: " + finalStreak + " " + pluralize(finalStreak))
-            );
+            requireActivity().runOnUiThread(() -> {
+                streakText.setText("🔥 Стрик: " + currentStreak + " " + pluralize(currentStreak));
+            });
         }).start();
     }
+
+
 
     private String pluralize(int count) {
         int mod10 = count % 10;
