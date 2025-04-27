@@ -111,7 +111,7 @@ public class CalendarFragment extends Fragment {
         fab.setOnClickListener(this::showFabMenu);
 
         loadCalendars();
-
+        setupAwards();
         return view;
     }
 
@@ -475,5 +475,8 @@ public class CalendarFragment extends Fragment {
             startActivity(intent);
         });
         dialog.show();
+    }
+    private void setupAwards() {
+
     }
     }

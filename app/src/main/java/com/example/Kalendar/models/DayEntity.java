@@ -18,4 +18,3 @@ public class DayEntity {
 
     public long timestamp; // UNIX-время
 }
-

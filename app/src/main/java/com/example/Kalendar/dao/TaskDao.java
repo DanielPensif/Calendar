@@ -23,6 +23,9 @@ public interface TaskDao {
     @Query("SELECT * FROM tasks WHERE id = :id LIMIT 1")
     TaskEntity getById(int id);
 
+    @Query("SELECT * FROM tasks WHERE dayId = :dayId")
+    List<TaskEntity> getTasksByDayId(int dayId);
+
     @Update
     void update(TaskEntity task);
 

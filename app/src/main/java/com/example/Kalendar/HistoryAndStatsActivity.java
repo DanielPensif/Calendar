@@ -3,13 +3,17 @@ package com.example.Kalendar;
 import android.os.Bundle;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.Kalendar.adapters.HistoryAdapter;
-import com.example.Kalendar.models.CompletedDay;
-import java.util.ArrayList;
+import com.example.Kalendar.CustomGraphView;
+import com.example.Kalendar.adapters.HistoryItem;
+import com.example.Kalendar.utils.DatabaseHelper;
+
 import java.util.List;
 
 public class HistoryAndStatsActivity extends AppCompatActivity {
@@ -18,7 +22,7 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
     private RecyclerView historyRecyclerView;
     private ImageView flashEffect;
     private HistoryAdapter adapter;
-    private List<CompletedDay> completedDays = new ArrayList<>();
+    private List<HistoryItem> historyItems;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,29 +33,19 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
         historyRecyclerView = findViewById(R.id.historyRecyclerView);
         flashEffect = findViewById(R.id.flashEffect);
 
-        loadChartData();
+        loadGraphData();
         loadHistory();
     }
 
-    private void loadChartData() {
-        List<Integer> taskCounts = new ArrayList<>();
-        taskCounts.add(3);
-        taskCounts.add(5);
-        taskCounts.add(2);
-        taskCounts.add(4);
-        taskCounts.add(6);
-        taskCounts.add(5);
-        taskCounts.add(7);
-
-        customGraphView.setTaskData(taskCounts);
+    private void loadGraphData() {
+        List<Integer> totalTasks = DatabaseHelper.getTaskCountsForLast7Days(this, false);
+        List<Integer> completedTasks = DatabaseHelper.getTaskCountsForLast7Days(this, true);
+        customGraphView.setData(totalTasks, completedTasks);
     }
 
     private void loadHistory() {
-        completedDays.add(new CompletedDay("1 мая"));
-        completedDays.add(new CompletedDay("3 мая"));
-        completedDays.add(new CompletedDay("5 мая"));
-
-        adapter = new HistoryAdapter(completedDays, this::showAwardDialog);
+        historyItems = DatabaseHelper.getCompletedDays(this);
+        adapter = new HistoryAdapter(historyItems, this::showAwardDialog);
 
         historyRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         historyRecyclerView.setAdapter(adapter);
@@ -63,8 +57,6 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle("Выбери награду")
                 .setItems(awards, (dialog, which) -> {
-                    completedDays.get(position).setAwardType(which);
-                    adapter.notifyItemChanged(position);
                     flashEffect.startAnimation(AnimationUtils.loadAnimation(this, R.anim.flash_success));
                 })
                 .show();

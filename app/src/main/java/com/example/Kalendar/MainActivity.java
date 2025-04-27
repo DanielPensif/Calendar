@@ -8,6 +8,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 
 import com.example.Kalendar.db.AppDatabase;
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
 
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) ->
                 Log.e("FATAL", "UNCAUGHT ERROR", throwable)

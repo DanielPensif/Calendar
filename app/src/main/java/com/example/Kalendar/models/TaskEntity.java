@@ -32,6 +32,5 @@ public class TaskEntity {
     public int dayId;
     public int calendarId;
     public String doneReason;
-
 }
 

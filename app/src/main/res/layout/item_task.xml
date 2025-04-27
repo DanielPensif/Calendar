@@ -49,7 +49,7 @@
         android:id="@+id/btnComplete"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:src="@drawable/ic_check_circle"
+        android:src="@drawable/ic_check_done"
         app:tint="@color/dark_gray"
         android:background="@android:color/transparent"
         android:contentDescription="Завершить"/>

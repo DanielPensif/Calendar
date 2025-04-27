@@ -30,6 +30,10 @@ public interface DayDao {
     @Query("SELECT * FROM days WHERE id = :id LIMIT 1")
     DayEntity getById(int id);
 
+    @Query("SELECT * FROM days")
+    List<DayEntity> getAllDays();
 
+    @Query("SELECT * FROM days WHERE timestamp BETWEEN :start AND :end")
+    List<DayEntity> getDaysBetween(long start, long end);
 }
 
