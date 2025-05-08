@@ -50,9 +50,7 @@ public class DatabaseHelper {
         }
         return result;
     }
-
-    // Получаем количество задач и выполненных задач за последние 7 дней
-    public static List<Integer> getTaskCountsForLast7Days(Context context, boolean onlyCompleted) {
+    public static List<Integer> getTaskCountsForLastNDays(Context context, int days, boolean onlyCompleted) {
         List<Integer> counts = new ArrayList<>();
         Calendar today = Calendar.getInstance();
         today.set(Calendar.HOUR_OF_DAY, 0);
@@ -63,12 +61,12 @@ public class DatabaseHelper {
         AppDatabase db = getDatabase(context);
         List<DayEntity> allDays = db.dayDao().getAllDays();
 
-        for (int i = 6; i >= 0; i--) {
+        for (int i = days - 1; i >= 0; i--) {
             Calendar targetDay = (Calendar) today.clone();
             targetDay.add(Calendar.DAY_OF_YEAR, -i);
 
             long dayStart = targetDay.getTimeInMillis();
-            long dayEnd = dayStart + 86400000L - 1; // до конца дня
+            long dayEnd = dayStart + 86400000L - 1;
 
             int count = 0;
 

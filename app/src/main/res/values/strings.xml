@@ -1,5 +1,11 @@
 <resources>
     <string name="app_name">Календарь задач</string>
-    <!-- TODO: Remove or change this placeholder text -->
+    <string-array name="days_range_options">
+        <item>7 дней</item>
+        <item>30 дней</item>
+        <item>90 дней</item>
+        <item>180 дней</item>
+        <item>365 дней</item>
+    </string-array>
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
