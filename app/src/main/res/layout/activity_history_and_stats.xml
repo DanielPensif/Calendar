@@ -9,19 +9,33 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/white" />
- <LinearLayout
-     android:layout_width="match_parent"
-     android:layout_height="match_parent"
-     android:orientation="vertical"
-     android:padding="16dp">
-     <TextView
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content"
-         android:text="График задач на 7 дней"
-         android:textSize="20sp"
-         android:textStyle="bold"
-         android:layout_marginBottom="8dp"
-         android:textColor="@color/black"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:id="@+id/textGraphTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="График задач на "
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"/>
+
+        <Spinner
+            android:id="@+id/spinnerDaysRange"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:spinnerMode="dropdown"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
      <com.github.mikephil.charting.charts.LineChart
          android:id="@+id/lineChart"
          android:layout_width="match_parent"
@@ -50,5 +64,6 @@
         android:src="@drawable/ic_flash"
         android:layout_gravity="center"
         android:visibility="gone"/>
- </LinearLayout>
 </LinearLayout>
+ </LinearLayout>
+
