@@ -20,6 +20,7 @@ import com.example.Kalendar.R;
 import com.example.Kalendar.adapters.CalendarGridAdapter;
 import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.models.CalendarEntity;
+import com.example.Kalendar.models.DayAwardEntity;
 import com.example.Kalendar.models.DayEntity;
 import com.example.Kalendar.models.EventEntity;
 import com.example.Kalendar.models.TaskEntity;
@@ -310,7 +311,18 @@ public class CalendarFragment extends Fragment {
                     }
                 }
             }
-
+            // Загрузка наград для дней
+            Map<LocalDate, String> awardsMap = new HashMap<>();
+            List<DayAwardEntity> awardEntities = db.dayAwardDao().getAll();
+            for (DayAwardEntity award : awardEntities) {
+                DayEntity day = db.dayDao().getById(award.dayId);
+                if (day == null) continue;
+                LocalDate date = Instant.ofEpochMilli(day.timestamp)
+                        .atZone(ZoneId.systemDefault()).toLocalDate();
+                if (currentCalendarId == -1 || day.calendarId == currentCalendarId) {
+                    awardsMap.put(date, award.awardType);
+                }
+            }
             // Вывод в UI
             requireActivity().runOnUiThread(() -> {
                 adapter = new CalendarGridAdapter(
@@ -318,11 +330,14 @@ public class CalendarFragment extends Fragment {
                         activeDayCalendars,
                         currentDate,
                         colorMap,
-                        this::onDayClick
+                        this::onDayClick,
+                        awardsMap
                 );
                 calendarGrid.setAdapter(adapter);
             });
         }).start();
+
+
     }
 
 

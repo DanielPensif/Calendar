@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.TypedValue;
 import android.view.*;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -26,6 +27,9 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
     private final LocalDate currentMonth;
     private final OnDayClickListener listener;
     private final Map<Integer, String> calendarIdToColor;
+    private final Map<LocalDate, String> awardsMap;
+
+
 
     private static final int MAX_UNDERLINES = 3;
 
@@ -33,12 +37,14 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
                                Map<LocalDate, Set<Integer>> activeDays,
                                LocalDate currentMonth,
                                Map<Integer, String> calendarIdToColor,
-                               OnDayClickListener listener) {
+                               OnDayClickListener listener,
+                               Map<LocalDate, String> awardsMap) {
         this.days = days;
         this.activeDayCalendars = activeDays;
         this.currentMonth = currentMonth;
         this.listener = listener;
         this.calendarIdToColor = calendarIdToColor;
+        this.awardsMap = awardsMap;
     }
 
     @NonNull
@@ -71,6 +77,28 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
 
         holder.underlineContainer.removeAllViews();
 
+        String award = awardsMap.get(date);
+        if (award != null) {
+            holder.awardIcon.setVisibility(View.VISIBLE);
+            switch (award) {
+                case "cup":
+                    holder.awardIcon.setImageResource(R.drawable.ic_award_cup);
+                    break;
+                case "medal":
+                    holder.awardIcon.setImageResource(R.drawable.ic_award_medal);
+                    break;
+                case "gold_border":
+                    holder.awardIcon.setImageResource(R.drawable.ic_award_gold_border);
+                    break;
+                default:
+                    holder.awardIcon.setVisibility(View.GONE);
+            }
+        } else {
+            holder.awardIcon.setVisibility(View.GONE);
+        }
+
+
+
         Set<Integer> calendars = activeDayCalendars.get(date);
         if (calendars != null) {
             int count = 0;
@@ -102,11 +130,13 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView dayNumber;
         LinearLayout underlineContainer;
+        ImageView awardIcon;
 
         public ViewHolder(View itemView) {
             super(itemView);
             dayNumber = itemView.findViewById(R.id.dayNumber);
             underlineContainer = itemView.findViewById(R.id.underlineContainer);
+            awardIcon = itemView.findViewById(R.id.awardIcon);
         }
     }
 

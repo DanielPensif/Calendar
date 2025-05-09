@@ -1,25 +1,39 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:padding="12dp"
     android:gravity="center_vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/completed_day_background">
 
-    <TextView
-        android:id="@+id/dayText"
-        android:text="5 мая"
-        android:textSize="18sp"
-        android:textColor="@color/black"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <LinearLayout
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/calendarText"
-        android:text="Календарь: Учёба"
-        android:textSize="14sp"
-        android:textColor="@color/dark_gray"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"/>
+        <TextView
+            android:id="@+id/dayText"
+            android:text="5 мая"
+            android:textSize="18sp"
+            android:textColor="@color/black"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/calendarText"
+            android:text="Календарь: Учёба"
+            android:textSize="14sp"
+            android:textColor="@color/dark_gray"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/awardIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:visibility="gone" />
 </LinearLayout>

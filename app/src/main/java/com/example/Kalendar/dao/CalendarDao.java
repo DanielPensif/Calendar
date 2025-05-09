@@ -24,4 +24,7 @@ public interface CalendarDao {
 
     @androidx.room.Delete
     void delete(CalendarEntity calendar);
+
+    @Query("SELECT id FROM calendars WHERE title = :name LIMIT 1")
+    int getIdByName(String name);
 }

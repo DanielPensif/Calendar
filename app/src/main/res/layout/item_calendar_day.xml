@@ -16,7 +16,13 @@
         android:padding="6dp"
         android:textColor="@android:color/black"
         android:gravity="center" />
-
+    <ImageView
+        android:id="@+id/awardIcon"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="2dp"
+        android:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/underlineContainer"

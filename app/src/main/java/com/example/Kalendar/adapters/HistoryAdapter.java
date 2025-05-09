@@ -3,6 +3,7 @@ package com.example.Kalendar.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.Kalendar.R;
@@ -13,6 +14,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
     private final List<HistoryItem> items;
     private final OnAwardClickListener listener;
+
 
     public interface OnAwardClickListener {
         void onAwardClick(int position);
@@ -39,6 +41,26 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
         holder.itemView.setBackgroundResource(R.drawable.completed_day_background);
 
         holder.itemView.setOnClickListener(v -> listener.onAwardClick(position));
+        if (item.award != null) {
+            holder.awardIcon.setVisibility(View.VISIBLE);
+            switch (item.award) {
+                case "trophy":
+                    holder.awardIcon.setImageResource(R.drawable.ic_award_cup);
+                    break;
+                case "medal":
+                    holder.awardIcon.setImageResource(R.drawable.ic_award_medal);
+                    break;
+                case "golden_frame":
+                    holder.awardIcon.setImageResource(R.drawable.ic_award_gold_border);
+                    break;
+                default:
+                    holder.awardIcon.setVisibility(View.GONE);
+                    break;
+            }
+        } else {
+            holder.awardIcon.setVisibility(View.GONE);
+        }
+
     }
 
     @Override
@@ -48,11 +70,13 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView dateText, calendarText;
+        ImageView awardIcon;
 
         ViewHolder(View itemView) {
             super(itemView);
             dateText = itemView.findViewById(R.id.dayText);
             calendarText = itemView.findViewById(R.id.calendarText);
+            awardIcon = itemView.findViewById(R.id.awardIcon);
         }
     }
 }
