@@ -6,83 +6,76 @@ import androidx.room.Room;
 
 import com.example.Kalendar.adapters.HistoryItem;
 import com.example.Kalendar.db.AppDatabase;
+import com.example.Kalendar.models.DayAwardEntity;
 import com.example.Kalendar.models.DayEntity;
-import com.example.Kalendar.models.TaskEntity;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class DatabaseHelper {
 
-    private static AppDatabase getDatabase(Context context) {
-        return Room.databaseBuilder(context, AppDatabase.class, "calendar_db")
-                .fallbackToDestructiveMigration()
-                .allowMainThreadQueries()
-                .build();
+    public static AppDatabase getDatabase(Context context) {
+        return AppDatabase.getDatabase(context);
     }
 
-    // Получаем все выполненные дни для истории
     public static List<HistoryItem> getCompletedDays(Context context) {
-        List<HistoryItem> result = new ArrayList<>();
-        List<DayEntity> allDays = getDatabase(context).dayDao().getAllDays();
+        List<DayEntity> days = getDatabase(context).dayDao().getAll(); // Или фильтрация по выполненным, если появится статус
+        List<HistoryItem> items = new ArrayList<>();
+        for (DayEntity day : days) {
+            String dateFormatted = android.text.format.DateFormat.format("d MMM", day.timestamp).toString();
+            String calendarName = getDatabase(context).calendarDao().getCalendarById(day.calendarId).title;
+            items.add(new HistoryItem(dateFormatted, calendarName, day.timestamp));
+        }
+        return items;
+    }
 
-        for (DayEntity day : allDays) {
-            List<TaskEntity> tasks = getDatabase(context).taskDao().getTasksByDayId(day.id);
+    public static void saveAwardForDay(Context context, int dayId, String awardType) {
+        DayAwardEntity award = new DayAwardEntity();
+        award.dayId = dayId;
+        award.awardType = awardType;
+        getDatabase(context).dayAwardDao().insertAward(award);
+    }
 
-            if (!tasks.isEmpty()) {
-                boolean allCompleted = true;
-                for (TaskEntity task : tasks) {
-                    if (!task.done) {
-                        allCompleted = false;
-                        break;
-                    }
-                }
-                if (allCompleted) {
-                    String calendarName = getDatabase(context).calendarDao().getCalendarById(day.calendarId).title;
-                    String formattedDate = new SimpleDateFormat("d MMMM", new Locale("ru")).format(day.timestamp);
+    public static int getDayIdByTimestampAndCalendarId(Context context, long timestamp, int calendarId) {
+        DayEntity day = getDatabase(context).dayDao().getByTimestampAndCalendarId(timestamp, calendarId);
+        return day != null ? day.id : -1;
+    }
 
-                    result.add(new HistoryItem(formattedDate, calendarName, day.timestamp));
-                }
+    public static Map<Long, String> getAwardsForCompletedDays(Context context) {
+        List<DayAwardEntity> awards = getDatabase(context).dayAwardDao().getAll();
+        Map<Long, String> result = new HashMap<>();
+        for (DayAwardEntity award : awards) {
+            DayEntity day = getDatabase(context).dayDao().getById(award.dayId);
+            if (day != null) {
+                result.put(day.timestamp, award.awardType);
             }
         }
         return result;
     }
-    public static List<Integer> getTaskCountsForLastNDays(Context context, int days, boolean onlyCompleted) {
+
+    public static List<Integer> getTaskCountsForLastNDays(Context context, int n, boolean completedOnly) {
+        Calendar calendar = Calendar.getInstance();
+        long end = calendar.getTimeInMillis();
+        calendar.add(Calendar.DAY_OF_YEAR, -n + 1);
+        long start = calendar.getTimeInMillis();
+
+        List<DayEntity> allDays = getDatabase(context).dayDao().getDaysBetween(start, end);
         List<Integer> counts = new ArrayList<>();
-        Calendar today = Calendar.getInstance();
-        today.set(Calendar.HOUR_OF_DAY, 0);
-        today.set(Calendar.MINUTE, 0);
-        today.set(Calendar.SECOND, 0);
-        today.set(Calendar.MILLISECOND, 0);
 
-        AppDatabase db = getDatabase(context);
-        List<DayEntity> allDays = db.dayDao().getAllDays();
-
-        for (int i = days - 1; i >= 0; i--) {
-            Calendar targetDay = (Calendar) today.clone();
-            targetDay.add(Calendar.DAY_OF_YEAR, -i);
-
-            long dayStart = targetDay.getTimeInMillis();
-            long dayEnd = dayStart + 86400000L - 1;
+        for (int i = 0; i < n; i++) {
+            long dayStart = start + i * 86400000L;
+            long dayEnd = dayStart + 86400000L;
 
             int count = 0;
-
             for (DayEntity day : allDays) {
-                if (day.timestamp >= dayStart && day.timestamp <= dayEnd) {
-                    List<TaskEntity> tasks = db.taskDao().getTasksByDayId(day.id);
-                    for (TaskEntity task : tasks) {
-                        if (onlyCompleted) {
-                            if (task.done) count++;
-                        } else {
-                            count++;
-                        }
-                    }
+                if (day.timestamp >= dayStart && day.timestamp < dayEnd) {
+                    count++;
                 }
             }
-
             counts.add(count);
         }
 

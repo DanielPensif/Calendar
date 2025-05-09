@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class HistoryAndStatsActivity extends AppCompatActivity {
 
@@ -158,19 +159,44 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
 
     private void loadHistory() {
         historyItems = DatabaseHelper.getCompletedDays(this);
+        Map<Long, String> awardsMap = DatabaseHelper.getAwardsForCompletedDays(this);
+
+        for (HistoryItem item : historyItems) {
+            if (awardsMap.containsKey(item.timestamp)) {
+                item.award = awardsMap.get(item.timestamp);
+            }
+        }
+
         adapter = new HistoryAdapter(historyItems, this::showAwardDialog);
 
         historyRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         historyRecyclerView.setAdapter(adapter);
     }
 
+
     private void showAwardDialog(int position) {
         String[] awards = {"🏆 Кубок", "🎖️ Медаль", "🔲 Рамка"};
+        HistoryItem item = historyItems.get(position);
 
         new AlertDialog.Builder(this)
                 .setTitle("Выбери награду")
                 .setItems(awards, (dialog, which) -> {
                     flashEffect.startAnimation(AnimationUtils.loadAnimation(this, R.anim.flash_success));
+
+                    int calendarId = DatabaseHelper.getDatabase(this).calendarDao().getIdByName(item.calendarName); // если есть
+                    int dayId = DatabaseHelper.getDayIdByTimestampAndCalendarId(this, item.timestamp, calendarId);
+                    if (dayId != -1) {
+                        String awardCode = switch (which) {
+                            case 0 -> "cup";
+                            case 1 -> "medal";
+                            case 2 -> "gold_border";
+                            default -> null;
+                        };
+                        if (awardCode != null) {
+                            DatabaseHelper.saveAwardForDay(this, dayId, awardCode);
+                            adapter.notifyItemChanged(position);
+                        }
+                    }
                 })
                 .show();
     }

@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import android.view.*;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
@@ -31,12 +32,11 @@ import java.util.function.*;
 import okhttp3.*;
 
 public class HomeFragment extends Fragment {
-
+    private ProgressBar quoteProgress;
+    private Button btnNewQuote;
     private TextView textTime, textDayMonth, textEmpty, textAllDone, textQuote;
-
     private HomeAdapter homeAdapter;
     private final List<HomeItem> homeItems = new ArrayList<>();
-
     private final List<TaskEntity> tasks = new ArrayList<>();
 
 
@@ -57,13 +57,22 @@ public class HomeFragment extends Fragment {
         textTime = view.findViewById(R.id.textTime);
         textDayMonth = view.findViewById(R.id.textDayMonth);
 
+        quoteProgress = view.findViewById(R.id.quoteProgress);
+        btnNewQuote = view.findViewById(R.id.btnNewQuote);
+
         textQuote = view.findViewById(R.id.textQuote);
         getQuoteForToday(quote -> {textQuote.setText(quote);});
 
         Button btnNewQuote = view.findViewById(R.id.btnNewQuote);
 
         btnNewQuote.setOnClickListener(v -> {
-            getQuoteForToday(quote -> {});
+            setQuoteLoading(true);
+            getQuoteForToday(quote -> {
+                requireActivity().runOnUiThread(() -> {
+                    textQuote.setText(quote);
+                    setQuoteLoading(false);
+                });
+            });
         });
 
         updateDateTime();
@@ -202,10 +211,30 @@ public class HomeFragment extends Fragment {
         textDayMonth.setText(formattedDate);
         textTime.setText(time.format(timeFormatter));
     }
+    private void setQuoteLoading(boolean isLoading) {
+        quoteProgress.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+
+        if (isLoading) {
+            textQuote.setVisibility(View.GONE);
+            btnNewQuote.setEnabled(false);
+        } else {
+            textQuote.setAlpha(0f);
+            textQuote.setVisibility(View.VISIBLE);
+            textQuote.animate().alpha(1f).setDuration(500).start();
+            btnNewQuote.setEnabled(true);
+        }
+    }
 
     private void getQuoteForToday(Consumer<String> callback) {
         OkHttpClient client = new OkHttpClient();
+        String currentQuote = textQuote.getText().toString();
 
+        final int maxAttempts = 10;
+
+        fetchUniqueQuote(client, currentQuote, callback, 0, maxAttempts);
+    }
+
+    private void fetchUniqueQuote(OkHttpClient client, String currentQuote, Consumer<String> callback, int attempt, int maxAttempts) {
         Request request = new Request.Builder()
                 .url("http://api.forismatic.com/api/1.0/?method=getQuote&format=json&lang=ru")
                 .build();
@@ -217,23 +246,32 @@ public class HomeFragment extends Fragment {
                     String responseData = response.body().string();
                     try {
                         JSONObject jsonObject = new JSONObject(responseData);
-                        String quote = jsonObject.getString("quoteText");
+                        String quote = jsonObject.getString("quoteText").trim();
 
-                        requireActivity().runOnUiThread(() -> {
-                            textQuote.setText(quote);
-                        });
-
+                        if (quote.equals(currentQuote) && attempt < maxAttempts) {
+                            // Повторная попытка
+                            fetchUniqueQuote(client, currentQuote, callback, attempt + 1, maxAttempts);
+                        } else {
+                            requireActivity().runOnUiThread(() -> callback.accept(quote));
+                        }
                     } catch (JSONException e) {
                         e.printStackTrace();
+                        fallback();
                     }
+                } else {
+                    fallback();
                 }
             }
 
             @Override
-            public void onFailure(@NonNull okhttp3.Call call, @NonNull IOException e) {
-                // Обработка ошибки сети
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 e.printStackTrace();
-                callback.accept("Не удалось загрузить цитату. Попробуйте позже.");
+                fallback();
+            }
+
+            private void fallback() {
+                requireActivity().runOnUiThread(() ->
+                        callback.accept("Не удалось загрузить новую цитату. Попробуйте позже."));
             }
         });
     }
