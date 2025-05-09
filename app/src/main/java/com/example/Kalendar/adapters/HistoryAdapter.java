@@ -42,23 +42,20 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
         holder.itemView.setOnClickListener(v -> listener.onAwardClick(position));
         if (item.award != null) {
-            holder.awardIcon.setVisibility(View.VISIBLE);
             switch (item.award) {
-                case "trophy":
+                case "cup":
                     holder.awardIcon.setImageResource(R.drawable.ic_award_cup);
                     break;
                 case "medal":
                     holder.awardIcon.setImageResource(R.drawable.ic_award_medal);
                     break;
-                case "golden_frame":
+                case "gold_border":
                     holder.awardIcon.setImageResource(R.drawable.ic_award_gold_border);
                     break;
                 default:
                     holder.awardIcon.setVisibility(View.GONE);
                     break;
             }
-        } else {
-            holder.awardIcon.setVisibility(View.GONE);
         }
 
     }

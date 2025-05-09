@@ -1,13 +1,36 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Подставка -->
     <path
-        android:fillColor="#FFD700"
-        android:pathData="M4,4H20V6H16L15,7H9L8,6H4V4M5,8V16H11V19H13V16H19V8H5M6,9H18V15H13V18H11V15H6V9M12,20L3,23H21L12,20Z" />
+        android:fillColor="#D4AF37"
+        android:pathData="M16,42h16v4H16z"/>
+    <!-- Основание ножки -->
     <path
-        android:fillColor="#B8860B"
-        android:pathData="M5,8L5,9H19L19,8H5" />
+        android:fillColor="#FFE066"
+        android:pathData="M18,30h12v12H18z"/>
+    <!-- Стебель -->
+    <path
+        android:fillColor="#FFE066"
+        android:pathData="M22,30h4v-6h-4z"/>
+    <!-- Чаша -->
+    <path
+        android:fillColor="#FFE066"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="2"
+        android:pathData="M14,2h20c2.21,0 4,1.79 4,5v8c0,4.42 -3.58,8 -8,8H18c-4.42,0 -8,-3.58 -8,-8V6c0,-2.21 1.79,-4 4,-4z"/>
+    <!-- Левая ручка -->
+    <path
+        android:fillColor="#FFE066"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="2"
+        android:pathData="M10,6c-2,0 -3,2 -3,4s1,4 3,4"/>
+    <!-- Правая ручка -->
+    <path
+        android:fillColor="#FFE066"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="2"
+        android:pathData="M38,6c2,0 3,2 3,4s-1,4 -3,4"/>
 </vector>

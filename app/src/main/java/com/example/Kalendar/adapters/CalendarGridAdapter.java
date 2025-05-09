@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.TypedValue;
 import android.view.*;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -27,8 +28,8 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
     private final LocalDate currentMonth;
     private final OnDayClickListener listener;
     private final Map<Integer, String> calendarIdToColor;
+    private final int currentCalendarId;
     private final Map<LocalDate, String> awardsMap;
-
 
 
     private static final int MAX_UNDERLINES = 3;
@@ -38,13 +39,15 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
                                LocalDate currentMonth,
                                Map<Integer, String> calendarIdToColor,
                                OnDayClickListener listener,
-                               Map<LocalDate, String> awardsMap) {
+                               Map<LocalDate, String> awardsMap,
+                               int currentCalendarId) {
         this.days = days;
         this.activeDayCalendars = activeDays;
         this.currentMonth = currentMonth;
         this.listener = listener;
         this.calendarIdToColor = calendarIdToColor;
         this.awardsMap = awardsMap;
+        this.currentCalendarId = currentCalendarId;
     }
 
     @NonNull
@@ -68,7 +71,6 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
         } else if (date.equals(LocalDate.now())) {
             holder.dayNumber.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.royalblue));
             holder.dayNumber.setTypeface(null, Typeface.BOLD);
-            holder.dayNumber.setBackgroundResource(R.drawable.today_circle_background);
         } else {
             holder.dayNumber.setTextColor(Color.BLACK);
             holder.dayNumber.setTypeface(null, Typeface.NORMAL);
@@ -77,26 +79,25 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
 
         holder.underlineContainer.removeAllViews();
 
+        // Скрыть фон награды по умолчанию
+        holder.awardBackground.setVisibility(View.GONE);
+
+        // Если есть награда для date
         String award = awardsMap.get(date);
         if (award != null) {
-            holder.awardIcon.setVisibility(View.VISIBLE);
+            holder.awardBackground.setVisibility(View.VISIBLE);
             switch (award) {
                 case "cup":
-                    holder.awardIcon.setImageResource(R.drawable.ic_award_cup);
+                    holder.awardBackground.setImageResource(R.drawable.ic_award_cup);
                     break;
                 case "medal":
-                    holder.awardIcon.setImageResource(R.drawable.ic_award_medal);
+                    holder.awardBackground.setImageResource(R.drawable.ic_award_medal);
                     break;
                 case "gold_border":
-                    holder.awardIcon.setImageResource(R.drawable.ic_award_gold_border);
+                    holder.awardBackground.setImageResource(R.drawable.ic_award_gold_border);
                     break;
-                default:
-                    holder.awardIcon.setVisibility(View.GONE);
             }
-        } else {
-            holder.awardIcon.setVisibility(View.GONE);
         }
-
 
 
         Set<Integer> calendars = activeDayCalendars.get(date);
@@ -116,6 +117,14 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
                 if (++count >= MAX_UNDERLINES) break;
             }
         }
+        // Показываем точку, если выбран "все календари" и задачи есть
+        if (currentCalendarId == -1 && activeDayCalendars.get(date) != null) {
+            holder.topRightIndicator.setVisibility(View.VISIBLE);
+            holder.awardBackground.setVisibility(View.GONE);
+        } else {
+            holder.topRightIndicator.setVisibility(View.GONE);
+        }
+
 
         holder.itemView.setOnClickListener(v -> listener.onDayClick(date));
     }
@@ -128,16 +137,21 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
 
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
+        FrameLayout numberContainer;
+        ImageView awardBackground;
         TextView dayNumber;
         LinearLayout underlineContainer;
-        ImageView awardIcon;
+        ImageView topRightIndicator;
 
         public ViewHolder(View itemView) {
             super(itemView);
+            numberContainer = itemView.findViewById(R.id.numberContainer);
+            awardBackground = itemView.findViewById(R.id.awardBackground);
             dayNumber = itemView.findViewById(R.id.dayNumber);
             underlineContainer = itemView.findViewById(R.id.underlineContainer);
-            awardIcon = itemView.findViewById(R.id.awardIcon);
+            topRightIndicator = itemView.findViewById(R.id.topRightIndicator);
         }
+
     }
 
     private int dpToPx(Context context, int dp) {
