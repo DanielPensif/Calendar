@@ -331,7 +331,8 @@ public class CalendarFragment extends Fragment {
                         currentDate,
                         colorMap,
                         this::onDayClick,
-                        awardsMap
+                        awardsMap,
+                        currentCalendarId
                 );
                 calendarGrid.setAdapter(adapter);
             });

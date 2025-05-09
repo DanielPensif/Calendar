@@ -32,8 +32,9 @@
 
     <ImageView
         android:id="@+id/awardIcon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_marginStart="8dp"
-        android:visibility="gone" />
+        android:background="@drawable/bg_item_award"
+        android:visibility="visible"/>
 </LinearLayout>

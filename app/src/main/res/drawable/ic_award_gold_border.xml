@@ -1,9 +1,144 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Базовый контур одного листа (ориентирован вверх от центра) -->
     <path
+        android:name="leaf"
         android:fillColor="#FFD700"
-        android:pathData="M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20Z" />
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="1"
+        android:pathData="
+            M50,18
+            C46,16 42,22 46,24
+            C50,26 54,24 54,22
+            C58,20 54,16 50,18
+            Z"/>
+
+    <!-- Левая сторона листьев -->
+    <group
+        android:pivotX="50"
+        android:pivotY="40"
+        android:rotation="-60">
+        <path
+            android:fillColor="#FFD700"
+            android:strokeColor="#D4AF37"
+            android:strokeWidth="1"
+            android:pathData="
+            M50,18
+            C46,16 42,22 46,24
+            C50,26 54,24 54,22
+            C58,20 54,16 50,18
+            Z" />
+    </group>
+    <group
+        android:pivotX="50"
+        android:pivotY="40"
+        android:rotation="-45">
+        <path
+            android:fillColor="#FFD700"
+            android:strokeColor="#D4AF37"
+            android:strokeWidth="1"
+            android:pathData="
+            M50,18
+            C46,16 42,22 46,24
+            C50,26 54,24 54,22
+            C58,20 54,16 50,18
+            Z" />
+    </group>
+    <group
+        android:pivotX="50"
+        android:pivotY="40"
+        android:rotation="-30">
+        <path
+            android:fillColor="#FFD700"
+            android:strokeColor="#D4AF37"
+            android:strokeWidth="1"
+            android:pathData="
+            M50,18
+            C46,16 42,22 46,24
+            C50,26 54,24 54,22
+            C58,20 54,16 50,18
+            Z" />
+    </group>
+    <group
+        android:pivotX="50"
+        android:pivotY="40"
+        android:rotation="-15">
+        <path
+            android:fillColor="#FFD700"
+            android:strokeColor="#D4AF37"
+            android:strokeWidth="1"
+            android:pathData="
+            M50,18
+            C46,16 42,22 46,24
+            C50,26 54,24 54,22
+            C58,20 54,16 50,18
+            Z"/>
+    </group>
+
+    <!-- Правая сторона листьев -->
+    <group
+        android:pivotX="50"
+        android:pivotY="40"
+        android:rotation="60">
+        <path
+            android:fillColor="#FFD700"
+            android:strokeColor="#D4AF37"
+            android:strokeWidth="1"
+            android:pathData="
+            M50,18
+            C46,16 42,22 46,24
+            C50,26 54,24 54,22
+            C58,20 54,16 50,18
+            Z" />
+    </group>
+    <group
+        android:pivotX="50"
+        android:pivotY="40"
+        android:rotation="45">
+        <path
+            android:fillColor="#FFD700"
+            android:strokeColor="#D4AF37"
+            android:strokeWidth="1"
+            android:pathData="
+            M50,18
+            C46,16 42,22 46,24
+            C50,26 54,24 54,22
+            C58,20 54,16 50,18
+            Z"/>
+    </group>
+    <group
+        android:pivotX="50"
+        android:pivotY="40"
+        android:rotation="30">
+        <path
+            android:fillColor="#FFD700"
+            android:strokeColor="#D4AF37"
+            android:strokeWidth="1"
+            android:pathData="
+            M50,18
+            C46,16 42,22 46,24
+            C50,26 54,24 54,22
+            C58,20 54,16 50,18
+            Z" />
+    </group>
+    <group
+        android:pivotX="50"
+        android:pivotY="40"
+        android:rotation="15">
+        <path
+            android:fillColor="#FFD700"
+            android:strokeColor="#D4AF37"
+            android:strokeWidth="1"
+            android:pathData="
+            M50,18
+            C46,16 42,22 46,24
+            C50,26 54,24 54,22
+            C58,20 54,16 50,18
+            Z" />
+    </group>
+
 </vector>

@@ -1,35 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="48dp"
     android:layout_height="64dp"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="4dp"
-    android:background="@color/white">
+    android:background="@color/white"
+    android:layout_marginStart="4dp"
+    android:padding="4dp">
 
-    <TextView
-        android:id="@+id/dayNumber"
-        android:layout_width="wrap_content"
+    <!-- Контейнер для числа + фон награды -->
+    <FrameLayout
+        android:id="@+id/numberContainer"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="15"
-        android:textSize="18sp"
-        android:padding="6dp"
-        android:textColor="@android:color/black"
-        android:gravity="center" />
-    <ImageView
-        android:id="@+id/awardIcon"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="2dp"
-        android:visibility="gone" />
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginStart="3dp"
+        android:layout_marginTop="4dp">
 
+        <!-- Фон награды (скрыт, если награды нет) -->
+        <ImageView
+            android:id="@+id/awardBackground"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:src="@drawable/ic_award_cup"
+        />
+
+        <!-- Номер дня поверх фона награды -->
+        <TextView
+            android:id="@+id/dayNumber"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="15"
+            android:textSize="18sp"
+            android:padding="6dp"
+            android:textColor="@android:color/black"
+            android:gravity="center" />
+    </FrameLayout>
+
+    <!-- Линии под задачами -->
     <LinearLayout
         android:id="@+id/underlineContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:layout_marginTop="2dp"/>
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="4dp"/>
 
-</LinearLayout>
+    <!-- Желтая точка для "все календари" -->
+    <ImageView
+        android:id="@+id/topRightIndicator"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="4dp"
+        android:background="@drawable/yellow_circle"
+        android:visibility="gone"/>
+
+</FrameLayout>
