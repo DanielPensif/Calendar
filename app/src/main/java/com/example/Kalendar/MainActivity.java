@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         navProfile.setTextColor(inactive);
         navHomeIcon.setColorFilter(inactive);
         navCalendarIcon.setColorFilter(inactive);
-        navProfileIcon.setColorFilter(inactive);
+        navProfileIcon.setImageResource(R.drawable.ic_profile);
 
         int active = Color.BLACK;
         switch (tab) {
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case "profile":
                 navProfile.setTextColor(active);
-                navProfileIcon.setColorFilter(active);
+                navProfileIcon.setImageResource(R.drawable.ic_profile_active);
                 break;
         }
     }

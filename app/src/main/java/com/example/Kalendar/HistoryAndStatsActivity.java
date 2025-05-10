@@ -2,6 +2,7 @@ package com.example.Kalendar;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.util.Pair;
 import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -87,6 +88,27 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
+        Spinner spinnerSortOptions = findViewById(R.id.spinnerSortOptions);
+        ArrayAdapter<CharSequence> sortAdapter = ArrayAdapter.createFromResource(
+                this,
+                R.array.sort_options,
+                android.R.layout.simple_spinner_item
+        );
+        sortAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerSortOptions.setAdapter(sortAdapter);
+
+        // Установка слушателя сортировки
+        spinnerSortOptions.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                sortHistory(position); // 0: новые, 1: старые, 2: А-Я, 3: Я-А
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+
         loadGraphData();
         loadHistory();
     }
@@ -159,18 +181,55 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
 
     private void loadHistory() {
         historyItems = DatabaseHelper.getCompletedDays(this);
-        Map<Long, String> awardsMap = DatabaseHelper.getAwardsForCompletedDays(this);
+        Map<Pair<Long, Integer>, String> awardsMap = DatabaseHelper.getAwardsForCompletedDays(this);
 
         for (HistoryItem item : historyItems) {
-            if (awardsMap.containsKey(item.timestamp)) {
-                item.award = awardsMap.get(item.timestamp);
+            Pair<Long, Integer> key = new Pair<>(item.timestamp, item.calendarId);
+            if (awardsMap.containsKey(key)) {
+                item.award = awardsMap.get(key);
             }
         }
 
         adapter = new HistoryAdapter(historyItems, this::showAwardDialog);
-
         historyRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         historyRecyclerView.setAdapter(adapter);
+
+        sortHistory(0); // по умолчанию: сначала новые
+    }
+
+
+    @SuppressLint("NotifyDataSetChanged")
+    private void sortHistory(int sortMode) {
+        if (historyItems == null) return;
+
+        switch (sortMode) {
+            case 0: // Сначала новые
+                historyItems.sort((a, b) -> {
+                    int cmp = Long.compare(b.timestamp, a.timestamp);
+                    return cmp != 0 ? cmp : a.calendarName.compareToIgnoreCase(b.calendarName);
+                });
+                break;
+            case 1: // Сначала старые
+                historyItems.sort((a, b) -> {
+                    int cmp = Long.compare(a.timestamp, b.timestamp);
+                    return cmp != 0 ? cmp : a.calendarName.compareToIgnoreCase(b.calendarName);
+                });
+                break;
+            case 2: // По алфавиту А-Я
+                historyItems.sort((a, b) -> {
+                    int cmp = a.calendarName.compareToIgnoreCase(b.calendarName);
+                    return cmp != 0 ? cmp : Long.compare(b.timestamp, a.timestamp);
+                });
+                break;
+            case 3: // По алфавиту Я-А
+                historyItems.sort((a, b) -> {
+                    int cmp = b.calendarName.compareToIgnoreCase(a.calendarName);
+                    return cmp != 0 ? cmp : Long.compare(b.timestamp, a.timestamp);
+                });
+                break;
+        }
+
+        adapter.notifyDataSetChanged();
     }
 
 
