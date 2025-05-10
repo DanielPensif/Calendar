@@ -3,9 +3,13 @@ package com.example.Kalendar;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Pair;
+import android.view.View;
 import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,17 +28,14 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Spinner;
-import android.widget.TextView;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class HistoryAndStatsActivity extends AppCompatActivity {
 
@@ -47,6 +48,9 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
     private TextView textGraphTitle;
     private int selectedDays = 7;
 
+    // однопоточный исполнитель для всех БД-задач
+    private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,7 +61,6 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
         flashEffect = findViewById(R.id.flashEffect);
         textGraphTitle = findViewById(R.id.textGraphTitle);
 
-        // Добавляем Toolbar
         Toolbar toolbar = findViewById(R.id.toolbarStats);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -67,23 +70,22 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         spinnerDaysRange = findViewById(R.id.spinnerDaysRange);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+        ArrayAdapter<CharSequence> adapterSpinner = ArrayAdapter.createFromResource(
                 this,
                 R.array.days_range_options,
                 android.R.layout.simple_spinner_item
         );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerDaysRange.setAdapter(adapter);
-        spinnerDaysRange.setSelection(0); // 7 дней по умолчанию
+        adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerDaysRange.setAdapter(adapterSpinner);
+        spinnerDaysRange.setSelection(0);
 
         spinnerDaysRange.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 int[] dayOptions = {7, 30, 90, 180, 365};
                 selectedDays = dayOptions[position];
-                loadGraphData();
+                loadGraphDataAsync();
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
@@ -96,35 +98,35 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
         );
         sortAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerSortOptions.setAdapter(sortAdapter);
-
-        // Установка слушателя сортировки
         spinnerSortOptions.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                sortHistory(position); // 0: новые, 1: старые, 2: А-Я, 3: Я-А
+                sortHistory(position);
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-
-        loadGraphData();
-        loadHistory();
+        loadGraphDataAsync();
+        loadHistoryAsync();
     }
+
     @Override
     protected void onResume() {
         super.onResume();
-        loadGraphData(); // Перезагружаем график при возвращении на экран
+        loadGraphDataAsync();
     }
 
-    private void loadGraphData() {
-        List<Integer> totalTasks = DatabaseHelper.getTaskCountsForLastNDays(this, selectedDays, false);
-        List<Integer> completedTasks = DatabaseHelper.getTaskCountsForLastNDays(this, selectedDays, true);
-
+    private void loadGraphDataAsync() {
+        dbExecutor.execute(() -> {
+            List<Integer> totalTasks = DatabaseHelper.getTaskCountsForLastNDays(this, selectedDays, false);
+            List<Integer> completedTasks = DatabaseHelper.getTaskCountsForLastNDays(this, selectedDays, true);
+            runOnUiThread(() -> updateChart(totalTasks, completedTasks));
+        });
+    }
+    private void updateChart(List<Integer> totalTasks, List<Integer> completedTasks) {
         List<Entry> totalEntries = new ArrayList<>();
         List<Entry> completedEntries = new ArrayList<>();
-
         for (int i = 0; i < totalTasks.size(); i++) {
             totalEntries.add(new Entry(i, totalTasks.get(i)));
             completedEntries.add(new Entry(i, completedTasks.get(i)));
@@ -154,7 +156,6 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
         xAxis.setValueFormatter(new ValueFormatter() {
             private final SimpleDateFormat dateFormat = new SimpleDateFormat("d MMM", Locale.getDefault());
             private final Calendar calendar = Calendar.getInstance();
-
             @Override
             public String getFormattedValue(float value) {
                 calendar.setTimeInMillis(System.currentTimeMillis());
@@ -177,86 +178,91 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
         lineChart.invalidate();
     }
 
-
-
-    private void loadHistory() {
-        historyItems = DatabaseHelper.getCompletedDays(this);
-        Map<Pair<Long, Integer>, String> awardsMap = DatabaseHelper.getAwardsForCompletedDays(this);
-
-        for (HistoryItem item : historyItems) {
-            Pair<Long, Integer> key = new Pair<>(item.timestamp, item.calendarId);
-            if (awardsMap.containsKey(key)) {
-                item.award = awardsMap.get(key);
+    private void loadHistoryAsync() {
+        dbExecutor.execute(() -> {
+            List<HistoryItem> items = DatabaseHelper.getCompletedDays(this);
+            Map<Pair<Long, Integer>, String> awardsMap = DatabaseHelper.getAwardsForCompletedDays(this);
+            for (HistoryItem item : items) {
+                Pair<Long, Integer> key = new Pair<>(item.timestamp, item.calendarId);
+                if (awardsMap.containsKey(key)) {
+                    item.award = awardsMap.get(key);
+                }
             }
-        }
-
-        adapter = new HistoryAdapter(historyItems, this::showAwardDialog);
-        historyRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        historyRecyclerView.setAdapter(adapter);
-
-        sortHistory(0); // по умолчанию: сначала новые
+            runOnUiThread(() -> {
+                historyItems = items;
+                adapter = new HistoryAdapter(historyItems, this::showAwardDialog);
+                historyRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+                historyRecyclerView.setAdapter(adapter);
+                sortHistory(0);
+            });
+        });
     }
-
 
     @SuppressLint("NotifyDataSetChanged")
     private void sortHistory(int sortMode) {
         if (historyItems == null) return;
-
         switch (sortMode) {
-            case 0: // Сначала новые
+            case 0:
                 historyItems.sort((a, b) -> {
                     int cmp = Long.compare(b.timestamp, a.timestamp);
                     return cmp != 0 ? cmp : a.calendarName.compareToIgnoreCase(b.calendarName);
                 });
                 break;
-            case 1: // Сначала старые
+            case 1:
                 historyItems.sort((a, b) -> {
                     int cmp = Long.compare(a.timestamp, b.timestamp);
                     return cmp != 0 ? cmp : a.calendarName.compareToIgnoreCase(b.calendarName);
                 });
                 break;
-            case 2: // По алфавиту А-Я
+            case 2:
                 historyItems.sort((a, b) -> {
                     int cmp = a.calendarName.compareToIgnoreCase(b.calendarName);
                     return cmp != 0 ? cmp : Long.compare(b.timestamp, a.timestamp);
                 });
                 break;
-            case 3: // По алфавиту Я-А
+            case 3:
                 historyItems.sort((a, b) -> {
                     int cmp = b.calendarName.compareToIgnoreCase(a.calendarName);
                     return cmp != 0 ? cmp : Long.compare(b.timestamp, a.timestamp);
                 });
                 break;
         }
-
         adapter.notifyDataSetChanged();
     }
-
 
     private void showAwardDialog(int position) {
         String[] awards = {"🏆 Кубок", "🎖️ Медаль", "🔲 Рамка"};
         HistoryItem item = historyItems.get(position);
-
         new AlertDialog.Builder(this)
                 .setTitle("Выбери награду")
                 .setItems(awards, (dialog, which) -> {
                     flashEffect.startAnimation(AnimationUtils.loadAnimation(this, R.anim.flash_success));
-
-                    int calendarId = DatabaseHelper.getDatabase(this).calendarDao().getIdByName(item.calendarName); // если есть
-                    int dayId = DatabaseHelper.getDayIdByTimestampAndCalendarId(this, item.timestamp, calendarId);
-                    if (dayId != -1) {
-                        String awardCode = switch (which) {
-                            case 0 -> "cup";
-                            case 1 -> "medal";
-                            case 2 -> "gold_border";
-                            default -> null;
-                        };
-                        if (awardCode != null) {
-                            DatabaseHelper.saveAwardForDay(this, dayId, awardCode);
-                            adapter.notifyItemChanged(position);
+                    dbExecutor.execute(() -> {
+                        int calendarId = DatabaseHelper.getDatabase(this)
+                                .calendarDao().getIdByName(item.calendarName);
+                        int dayId = DatabaseHelper.getDayIdByTimestampAndCalendarId(
+                                this, item.timestamp, calendarId
+                        );
+                        if (dayId != -1) {
+                            String awardCode = switch (which) {
+                                case 0 -> "cup";
+                                case 1 -> "medal";
+                                case 2 -> "gold_border";
+                                default -> null;
+                            };
+                            if (awardCode != null) {
+                                DatabaseHelper.saveAwardForDay(this, dayId, awardCode);
+                                runOnUiThread(() -> adapter.notifyItemChanged(position));
+                            }
                         }
-                    }
+                    });
                 })
                 .show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        dbExecutor.shutdown();
     }
 }
