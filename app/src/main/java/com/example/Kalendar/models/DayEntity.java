@@ -17,4 +17,5 @@ public class DayEntity {
     public int calendarId;
 
     public long timestamp; // UNIX-время
+    public String awardType; // "cup", "medal", "gold_border", null
 }

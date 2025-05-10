@@ -15,6 +15,7 @@ import com.example.Kalendar.fragments.CompleteTaskDialogFragment;
 import com.example.Kalendar.fragments.TasksFragment;
 import com.example.Kalendar.models.DayEntity;
 import com.example.Kalendar.models.TaskEntity;
+import com.example.Kalendar.utils.DatabaseHelper;
 
 import org.threeten.bp.Instant;
 import org.threeten.bp.LocalDate;
@@ -115,6 +116,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                 task.rating = null;
                                 new Thread(() -> {
                                     AppDatabase.getDatabase(v.getContext()).taskDao().update(task);
+                                    DatabaseHelper.updateDayCompletionStatus(v.getContext(), task.dayId);
                                     if (listener != null) listener.onTaskChanged();
                                     if (v.getContext() instanceof AppCompatActivity) {
                                         Fragment f = ((AppCompatActivity) v.getContext())
@@ -159,6 +161,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     .findFragmentByTag("f0");
                             if (f instanceof TasksFragment) ((TasksFragment) f).refresh();
                         }
+                        DatabaseHelper.updateDayCompletionStatus(v.getContext(), task.dayId);
                     });
                     dialog.show(((AppCompatActivity) v.getContext()).getSupportFragmentManager(), "completeTask");
                 });

@@ -7,17 +7,15 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
 import com.example.Kalendar.dao.CalendarDao;
-import com.example.Kalendar.dao.DayAwardDao;
 import com.example.Kalendar.dao.DayDao;
 import com.example.Kalendar.dao.EventDao;
 import com.example.Kalendar.dao.TaskDao;
 import com.example.Kalendar.models.CalendarEntity;
-import com.example.Kalendar.models.DayAwardEntity;
 import com.example.Kalendar.models.DayEntity;
 import com.example.Kalendar.models.EventEntity;
 import com.example.Kalendar.models.TaskEntity;
 
-@Database(entities = {DayEntity.class, TaskEntity.class, EventEntity.class, CalendarEntity.class, DayAwardEntity.class }, version = 2)
+@Database(entities = {DayEntity.class, TaskEntity.class, EventEntity.class, CalendarEntity.class}, version = 1)
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase INSTANCE;
 
@@ -26,7 +24,6 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract EventDao eventDao();
 
     public abstract CalendarDao calendarDao();
-    public abstract DayAwardDao dayAwardDao();
 
     public static AppDatabase getDatabase(Context context) {
         if (INSTANCE == null) {

@@ -29,6 +29,14 @@ public interface TaskDao {
     @Query("SELECT * FROM tasks")
     List<TaskEntity> getAllTasks();
 
+    @Query("SELECT COUNT(*) FROM tasks WHERE dayId = :dayId AND done = true")
+    int getCompletedTaskCountForDay(int dayId);
+    @Query("SELECT COUNT(*) FROM tasks WHERE dayId = :dayId AND done = true")
+    int getCompletedTaskCountByDayId(int dayId);
+
+    @Query("SELECT COUNT(*) FROM tasks WHERE dayId = :dayId")
+    int getTotalTaskCountByDayId(int dayId);
+
     @Update
     void update(TaskEntity task);
 
