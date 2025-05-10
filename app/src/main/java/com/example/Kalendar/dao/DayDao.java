@@ -2,7 +2,9 @@ package com.example.Kalendar.dao;
 
 import androidx.room.Dao;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import com.example.Kalendar.models.DayEntity;
 
@@ -12,6 +14,8 @@ import java.util.List;
 public interface DayDao {
     @Insert
     long insert(DayEntity day);
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertDay(DayEntity day);
 
     @Query("SELECT * FROM days WHERE calendarId = :calendarId")
     List<DayEntity> getByCalendarId(int calendarId);
@@ -35,5 +39,8 @@ public interface DayDao {
 
     @Query("SELECT * FROM days WHERE timestamp BETWEEN :start AND :end")
     List<DayEntity> getDaysBetween(long start, long end);
+
+    @Update
+    void update(DayEntity day);
 }
 

@@ -82,7 +82,7 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
         spinnerDaysRange.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                int[] dayOptions = {7, 30, 90, 180, 365};
+                int[] dayOptions = {7, 14, 30, 60, 90};
                 selectedDays = dayOptions[position];
                 loadGraphDataAsync();
             }
@@ -119,40 +119,51 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
 
     private void loadGraphDataAsync() {
         dbExecutor.execute(() -> {
-            List<Integer> totalTasks = DatabaseHelper.getTaskCountsForLastNDays(this, selectedDays, false);
-            List<Integer> completedTasks = DatabaseHelper.getTaskCountsForLastNDays(this, selectedDays, true);
-            runOnUiThread(() -> updateChart(totalTasks, completedTasks));
+            List<int[]> stats = DatabaseHelper.getDetailedTaskStatsForLastNDays(this, selectedDays);
+            runOnUiThread(() -> updateChart(stats));
         });
     }
-    private void updateChart(List<Integer> totalTasks, List<Integer> completedTasks) {
+
+    private void updateChart(List<int[]> stats) {
         List<Entry> totalEntries = new ArrayList<>();
         List<Entry> completedEntries = new ArrayList<>();
-        for (int i = 0; i < totalTasks.size(); i++) {
-            totalEntries.add(new Entry(i, totalTasks.get(i)));
-            completedEntries.add(new Entry(i, completedTasks.get(i)));
+        List<Entry> notCompletedEntries = new ArrayList<>();
+
+        for (int i = 0; i < stats.size(); i++) {
+            int[] day = stats.get(i);
+            totalEntries.add(new Entry(i, day[0]));
+            completedEntries.add(new Entry(i, day[1]));
+            notCompletedEntries.add(new Entry(i, day[2]));
         }
 
         LineDataSet totalDataSet = new LineDataSet(totalEntries, "Все задачи");
         totalDataSet.setColor(0xFF1E88E5);
         totalDataSet.setCircleColor(0xFF1E88E5);
-        totalDataSet.setLineWidth(2f);
-        totalDataSet.setCircleRadius(4f);
 
-        LineDataSet completedDataSet = new LineDataSet(completedEntries, "Выполненные задачи");
+        LineDataSet completedDataSet = new LineDataSet(completedEntries, "Выполненные");
         completedDataSet.setColor(0xFFFFD700);
         completedDataSet.setCircleColor(0xFFFFD700);
-        completedDataSet.setLineWidth(2f);
-        completedDataSet.setCircleRadius(4f);
 
-        LineData lineData = new LineData(totalDataSet, completedDataSet);
+        LineDataSet notCompletedDataSet = new LineDataSet(notCompletedEntries, "Невыполненные");
+        notCompletedDataSet.setColor(0xFFFF4444);
+        notCompletedDataSet.setCircleColor(0xFFFF4444);
+
+        for (LineDataSet set : List.of(totalDataSet, completedDataSet, notCompletedDataSet)) {
+            set.setLineWidth(2f);
+            set.setCircleRadius(4f);
+            set.setValueTextSize(14f); // увеличенный текст
+        }
+
+        LineData lineData = new LineData(totalDataSet, completedDataSet, notCompletedDataSet);
         lineData.setDrawValues(false);
 
         lineChart.setData(lineData);
 
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setDrawGridLines(false);
         xAxis.setGranularity(1f);
+        xAxis.setTextSize(14f); // увеличенный текст
+        xAxis.setLabelRotationAngle(-45);
         xAxis.setValueFormatter(new ValueFormatter() {
             private final SimpleDateFormat dateFormat = new SimpleDateFormat("d MMM", Locale.getDefault());
             private final Calendar calendar = Calendar.getInstance();
@@ -163,16 +174,16 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
                 return dateFormat.format(calendar.getTime());
             }
         });
-        xAxis.setLabelRotationAngle(-45);
 
         YAxis leftAxis = lineChart.getAxisLeft();
         leftAxis.setGranularity(1f);
+        leftAxis.setTextSize(14f); // увеличенный текст
         leftAxis.setAxisMinimum(0f);
-        leftAxis.setDrawGridLines(true);
 
         lineChart.getAxisRight().setEnabled(false);
         lineChart.getDescription().setEnabled(false);
         lineChart.getLegend().setEnabled(true);
+        lineChart.getLegend().setTextSize(14f); // увеличенный текст
 
         lineChart.animateX(1000);
         lineChart.invalidate();

@@ -2,10 +2,10 @@
     <string name="app_name">Календарь задач</string>
     <string-array name="days_range_options">
         <item>7 дней</item>
+        <item>14 дней</item>
         <item>30 дней</item>
+        <item>60 дней</item>
         <item>90 дней</item>
-        <item>180 дней</item>
-        <item>365 дней</item>
     </string-array>
     <string-array name="sort_options">
         <item>Сначала новые</item>

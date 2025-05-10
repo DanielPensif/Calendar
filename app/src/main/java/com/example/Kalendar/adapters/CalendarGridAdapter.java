@@ -118,7 +118,7 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
             }
         }
         // Показываем точку, если выбран "все календари" и задачи есть
-        if (currentCalendarId == -1 && activeDayCalendars.get(date) != null) {
+        if (currentCalendarId == -1 && activeDayCalendars.get(date) != null && award != null) {
             holder.topRightIndicator.setVisibility(View.VISIBLE);
             holder.awardBackground.setVisibility(View.GONE);
         } else {
