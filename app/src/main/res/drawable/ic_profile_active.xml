@@ -3,12 +3,12 @@
     android:viewportWidth="24" android:viewportHeight="24">
 
     <!-- Силуэт человека -->
-    <path android:fillColor="#888888"
+    <path android:fillColor="#000000"
         android:pathData="M12,4a3,3 0 1,1 0,6a3,3 0 0,1 0,-6z" />
-    <path android:fillColor="#888888"
+    <path android:fillColor="#000000"
         android:pathData="M6,16v-2c0,-2.21 3.58,-4 6,-4s6,1.79 6,4v2H6z" />
 
-    <!-- Лампочка (выключена) -->
-    <path android:fillColor="#AAAAAA"
+    <!-- Лампочка (включена) -->
+    <path android:fillColor="#FFD700"
         android:pathData="M12,1a1,1 0 0,1 1,1v1h-2V2a1,1 0 0,1 1,-1z" />
 </vector>

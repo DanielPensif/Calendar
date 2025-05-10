@@ -1,6 +1,7 @@
 package com.example.Kalendar.utils;
 
 import android.content.Context;
+import android.util.Pair;
 
 import androidx.room.Room;
 
@@ -28,7 +29,7 @@ public class DatabaseHelper {
         for (DayEntity day : days) {
             String dateFormatted = android.text.format.DateFormat.format("d MMM", day.timestamp).toString();
             String calendarName = getDatabase(context).calendarDao().getCalendarById(day.calendarId).title;
-            items.add(new HistoryItem(dateFormatted, calendarName, day.timestamp));
+            items.add(new HistoryItem(dateFormatted, calendarName, day.timestamp, day.calendarId));
         }
         return items;
     }
@@ -45,17 +46,20 @@ public class DatabaseHelper {
         return day != null ? day.id : -1;
     }
 
-    public static Map<Long, String> getAwardsForCompletedDays(Context context) {
+    public static Map<Pair<Long, Integer>, String> getAwardsForCompletedDays(Context context) {
         List<DayAwardEntity> awards = getDatabase(context).dayAwardDao().getAll();
-        Map<Long, String> result = new HashMap<>();
+        Map<Pair<Long, Integer>, String> result = new HashMap<>();
+
         for (DayAwardEntity award : awards) {
             DayEntity day = getDatabase(context).dayDao().getById(award.dayId);
             if (day != null) {
-                result.put(day.timestamp, award.awardType);
+                Pair<Long, Integer> key = new Pair<>(day.timestamp, day.calendarId);
+                result.put(key, award.awardType);
             }
         }
         return result;
     }
+
 
     public static List<Integer> getTaskCountsForLastNDays(Context context, int n, boolean completedOnly) {
         Calendar calendar = Calendar.getInstance();

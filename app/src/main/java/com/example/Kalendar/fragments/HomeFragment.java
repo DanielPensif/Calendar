@@ -3,6 +3,7 @@ package com.example.Kalendar.fragments;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 
+import android.os.Handler;
 import android.view.*;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -38,6 +39,9 @@ public class HomeFragment extends Fragment {
     private HomeAdapter homeAdapter;
     private final List<HomeItem> homeItems = new ArrayList<>();
     private final List<TaskEntity> tasks = new ArrayList<>();
+    private Handler handler = new Handler();
+    private Runnable timeUpdater;
+
 
 
     @Nullable
@@ -75,7 +79,16 @@ public class HomeFragment extends Fragment {
             });
         });
 
-        updateDateTime();
+        timeUpdater = new Runnable() {
+            @Override
+            public void run() {
+                if (isAdded()) {
+                    updateDateTime();
+                    handler.postDelayed(this, 1000);
+                }
+            }
+        };
+        handler.post(timeUpdater);
 
         textEmpty = view.findViewById(R.id.textEmpty);
         textAllDone = view.findViewById(R.id.textAllDone);
@@ -172,6 +185,11 @@ public class HomeFragment extends Fragment {
         super.onResume();
         loadTodayContent();
     }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        handler.removeCallbacks(timeUpdater);
+    }
 
     @SuppressLint("NotifyDataSetChanged")
     private void renderHome(List<TaskEntity> tasks, List<EventEntity> events) {
@@ -197,7 +215,6 @@ public class HomeFragment extends Fragment {
         homeAdapter.notifyDataSetChanged();
     }
 
-
     private void updateDateTime() {
         LocalDate today = LocalDate.now();
         LocalTime time = LocalTime.now();
@@ -206,11 +223,13 @@ public class HomeFragment extends Fragment {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
         String formattedDate = today.format(dateFormatter);
-        formattedDate = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1); // заглавная первая буква
+        formattedDate = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);
 
         textDayMonth.setText(formattedDate);
         textTime.setText(time.format(timeFormatter));
     }
+
+
     private void setQuoteLoading(boolean isLoading) {
         quoteProgress.setVisibility(isLoading ? View.VISIBLE : View.GONE);
 

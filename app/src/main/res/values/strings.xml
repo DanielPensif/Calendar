@@ -7,5 +7,11 @@
         <item>180 дней</item>
         <item>365 дней</item>
     </string-array>
+    <string-array name="sort_options">
+        <item>Сначала новые</item>
+        <item>Сначала старые</item>
+        <item>По алфавиту А-Я</item>
+        <item>По алфавиту Я-А</item>
+    </string-array>
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
