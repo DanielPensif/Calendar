@@ -1,15 +1,13 @@
+// EventsFragment.java
 package com.example.Kalendar.fragments;
 
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -17,20 +15,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.Kalendar.R;
 import com.example.Kalendar.adapters.EventAdapter;
 import com.example.Kalendar.db.AppDatabase;
+import com.example.Kalendar.models.CalendarEntity;
 import com.example.Kalendar.models.DayEntity;
 import com.example.Kalendar.models.EventEntity;
 import com.example.Kalendar.utils.EventUtils;
+import com.example.Kalendar.adapters.SessionManager;
 
 import org.threeten.bp.Instant;
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.ZoneId;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class EventsFragment extends Fragment {
@@ -41,6 +36,10 @@ public class EventsFragment extends Fragment {
     private final List<EventEntity> events = new ArrayList<>();
 
     private final Set<String> selectedCategories = new HashSet<>();
+    private final List<String> allCategories = Arrays.asList("Все","Работа","Встреча","Учёба","Личное");
+
+    private int currentUserId;
+    private List<Integer> myCalendarIds = Collections.emptyList();
 
     public static EventsFragment newInstance(LocalDate date) {
         EventsFragment fragment = new EventsFragment();
@@ -54,9 +53,7 @@ public class EventsFragment extends Fragment {
         return date;
     }
 
-
-    @Nullable
-    @Override
+    @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
@@ -64,97 +61,109 @@ public class EventsFragment extends Fragment {
 
         date = LocalDate.parse(Objects.requireNonNull(requireArguments().getString("date")));
         db = AppDatabase.getDatabase(requireContext());
-        RecyclerView recyclerView = view.findViewById(R.id.eventsRecycler);
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        adapter = new EventAdapter(events);
-        recyclerView.setAdapter(adapter);
+        currentUserId = SessionManager.getLoggedInUserId(requireContext());
+
+        RecyclerView rv = view.findViewById(R.id.eventsRecycler);
+        rv.setLayoutManager(new LinearLayoutManager(requireContext()));
+        adapter = new EventAdapter(requireContext(), events);
+        rv.setAdapter(adapter);
 
         Spinner filterSpinner = view.findViewById(R.id.categoryFilter);
-        List<String> allCategories = Arrays.asList("Все", "Работа", "Встреча", "Учёба", "Личное");
-        ArrayAdapter<String> filterAdapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_dropdown_item, allCategories);
+        ArrayAdapter<String> filterAdapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_dropdown_item,
+                allCategories
+        );
         filterSpinner.setAdapter(filterAdapter);
-
+        filterSpinner.setSelection(0);
         filterSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            @Override public void onItemSelected(AdapterView<?> parent, View v, int pos, long id) {
                 selectedCategories.clear();
-                if (position == 0) {
+                if (pos == 0) {
                     selectedCategories.addAll(allCategories.subList(1, allCategories.size()));
                 } else {
-                    selectedCategories.add(allCategories.get(position));
+                    selectedCategories.add(allCategories.get(pos));
                 }
                 loadEventsForDate();
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-
-        loadEventsForDate();
+        // загрузка моих календарей и первого раза событий
+        new Thread(() -> {
+            List<CalendarEntity> myCals = db.calendarDao().getByUserId(currentUserId);
+            myCalendarIds = myCals.stream()
+                    .map(c -> c.id)
+                    .collect(Collectors.toList());
+            // инициализируем фильтр "Все"
+            selectedCategories.clear();
+            selectedCategories.addAll(allCategories.subList(1, allCategories.size()));
+            loadEventsForDate();
+        }).start();
 
         return view;
     }
 
     private void loadEventsForDate() {
         new Thread(() -> {
-            long timestamp = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
-            List<DayEntity> days = db.dayDao().getByTimestamp(timestamp);
+            long ts = date.atStartOfDay(ZoneId.systemDefault())
+                    .toInstant().toEpochMilli();
+
+            // 1) дни моего пользователя
+            List<DayEntity> days = db.dayDao().getByTimestamp(ts).stream()
+                    .filter(d -> myCalendarIds.contains(d.calendarId))
+                    .collect(Collectors.toList());
+
             List<EventEntity> allEvents = new ArrayList<>();
+            Set<Integer> accounted = new HashSet<>();
 
-            Set<Integer> accountedIds = new HashSet<>();
+            // 2) оригинальные и виртуальные экземпляры
+            for (DayEntity d : days) {
+                List<EventEntity> evs = db.eventDao().getEventsForDay(d.id);
+                for (EventEntity e : evs) {
+                    boolean isOriginal = d.id == e.dayId;
+                    LocalDate start = Instant.ofEpochMilli(d.timestamp)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
 
-            if (!days.isEmpty()) {
-                for (DayEntity d : days) {
-                    List<EventEntity> events = db.eventDao().getEventsForDay(d.id);
-
-                    for (EventEntity e : events) {
-                        boolean isOriginal = d.id == e.dayId;
-                        LocalDate start = Instant.ofEpochMilli(d.timestamp)
-                                .atZone(ZoneId.systemDefault()).toLocalDate();
-
-                        if (e.repeatRule != null && !e.repeatRule.isEmpty()) {
-                            if (EventUtils.occursOnDate(e, date, start)) {
-                                if (!isOriginal) {
-                                    allEvents.add(createVirtualCopy(e, d));
-                                } else {
-                                    allEvents.add(e);
-                                }
-                                accountedIds.add(e.id);
+                    if (e.repeatRule != null && !e.repeatRule.isEmpty()) {
+                        if (EventUtils.occursOnDate(e, date, start)) {
+                            if (!isOriginal) {
+                                allEvents.add(createVirtualCopy(e, d));
+                            } else {
+                                allEvents.add(e);
                             }
-                        } else if (isOriginal) {
-                            allEvents.add(e);
-                            accountedIds.add(e.id);
+                            accounted.add(e.id);
                         }
+                    } else if (isOriginal) {
+                        allEvents.add(e);
+                        accounted.add(e.id);
                     }
                 }
             }
 
-            // Обработка повторов, не добавленных ранее
-            List<EventEntity> all = db.eventDao().getAll();
-            for (EventEntity e : all) {
-                if (accountedIds.contains(e.id)) continue;
-                if (e.repeatRule == null || e.repeatRule.isEmpty()) continue;
+            // 3) доп. виртуальные повторы из всех событий, но только свои календари
+            db.eventDao().getAll().stream()
+                    .filter(e -> myCalendarIds.contains(e.calendarId))
+                    .filter(e -> e.repeatRule != null && !e.repeatRule.isEmpty())
+                    .filter(e -> !accounted.contains(e.id))
+                    .forEach(e -> {
+                        DayEntity base = db.dayDao().getById(e.dayId);
+                        if (base != null) {
+                            LocalDate start = Instant.ofEpochMilli(base.timestamp)
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDate();
+                            if (EventUtils.occursOnDate(e, date, start)) {
+                                DayEntity vday = new DayEntity();
+                                vday.id = base.id;
+                                vday.calendarId = e.calendarId;
+                                vday.timestamp = ts;
+                                allEvents.add(createVirtualCopy(e, vday));
+                            }
+                        }
+                    });
 
-                DayEntity base = db.dayDao().getById(e.dayId);
-                if (base == null) continue;
-
-                LocalDate start = Instant.ofEpochMilli(base.timestamp)
-                        .atZone(ZoneId.systemDefault()).toLocalDate();
-
-                if (EventUtils.occursOnDate(e, date, start)) {
-                    DayEntity virtualDay = new DayEntity();
-                    virtualDay.id = base.id;
-                    virtualDay.calendarId = e.calendarId;
-                    virtualDay.timestamp = timestamp;
-
-                    allEvents.add(createVirtualCopy(e, virtualDay));
-                }
-            }
-
-            // фильтрация и сортировка
+            // 4) фильтрация и сортировка
             List<EventEntity> filtered = allEvents.stream()
                     .filter(e -> selectedCategories.contains(e.category))
                     .sorted((a, b) -> {
@@ -166,49 +175,39 @@ public class EventsFragment extends Fragment {
                     })
                     .collect(Collectors.toList());
 
-            requireActivity().runOnUiThread(() -> {
-                adapter.updateEvents(filtered);
-            });
+            requireActivity().runOnUiThread(() -> adapter.updateEvents(filtered));
         }).start();
     }
 
-
     private EventEntity createVirtualCopy(EventEntity e, DayEntity day) {
         EventEntity copy = new EventEntity();
-        copy.title = e.title;
-        copy.timeStart = e.timeStart;
-        copy.timeEnd = e.timeEnd;
-        copy.allDay = e.allDay;
-        copy.repeatRule = e.repeatRule;
+        copy.title         = e.title;
+        copy.timeStart     = e.timeStart;
+        copy.timeEnd       = e.timeEnd;
+        copy.allDay        = e.allDay;
+        copy.repeatRule    = e.repeatRule;
         copy.excludedDates = e.excludedDates;
-        copy.category = e.category;
-        copy.description = e.description;
-        copy.location = e.location;
-        copy.done = false;
-        copy.dayId = day.id;
-        copy.calendarId = e.calendarId;
-        copy.date = date.toString();
+        copy.category      = e.category;
+        copy.location      = e.location;
+        copy.description   = e.description;
+        copy.done          = false;
+        copy.dayId         = day.id;
+        copy.calendarId    = e.calendarId;
+        copy.date          = date.toString();
         return copy;
     }
-
-
-
-
 
     private int safeToMinutes(String time) {
         try {
             String[] parts = time.split(":");
-            return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);
-        } catch (Exception e) {
+            return Integer.parseInt(parts[0]) * 60
+                    + Integer.parseInt(parts[1]);
+        } catch (Exception ex) {
             return 0;
         }
     }
 
-
-
     public void refresh() {
         loadEventsForDate();
     }
-
 }
-

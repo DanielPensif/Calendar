@@ -1,5 +1,6 @@
 package com.example.Kalendar.adapters;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.view.*;
 import android.widget.*;
 
@@ -26,8 +27,10 @@ import java.util.stream.Collectors;
 
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.ViewHolder> {
     private List<EventEntity> events;
+    private final int currentUserId;
 
-    public EventAdapter(List<EventEntity> events) {
+    public EventAdapter(Context ctx, List<EventEntity> events) {
+        this.currentUserId = SessionManager.getLoggedInUserId(ctx);
         this.events = events;
     }
 
@@ -103,7 +106,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.ViewHolder> 
                                                         dayLocal.id = (int) db.dayDao().insert(dayLocal);
                                                     }
 
-                                                    single.dayId = dayLocal.id;
+                                                    single.calendarId = event.calendarId;
+                                                    single.dayId      = dayLocal.id;
 
                                                     EventEntity original = db.eventDao().getById(event.id);
                                                     if (original != null) {

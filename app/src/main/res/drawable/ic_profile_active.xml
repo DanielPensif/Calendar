@@ -1,14 +1,44 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp" android:height="24dp"
-    android:viewportWidth="24" android:viewportHeight="24">
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
 
-    <!-- Силуэт человека -->
-    <path android:fillColor="#000000"
-        android:pathData="M12,4a3,3 0 1,1 0,6a3,3 0 0,1 0,-6z" />
-    <path android:fillColor="#000000"
-        android:pathData="M6,16v-2c0,-2.21 3.58,-4 6,-4s6,1.79 6,4v2H6z" />
+    <!-- Голова человека -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M30,29a6,6 0,1 1,-12,0a6,6 0,1 1,12,0" />
 
-    <!-- Лампочка (включена) -->
-    <path android:fillColor="#FFD700"
-        android:pathData="M12,1a1,1 0 0,1 1,1v1h-2V2a1,1 0 0,1 1,-1z" />
+    <!-- Плечи и торс -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M18,39c0,-2.21 1.79,-4 4,-4h4c2.21,0 4,1.79 4,4v2c0,2.21 -1.79,4 -4,4h-4c-2.21,0 -4,-1.79 -4,-4v-2z" />
+
+    <!-- Стеклянная часть лампочки -->
+    <path
+        android:fillColor="#FFEB3B"
+        android:strokeColor="#FBC02D"
+        android:strokeWidth="1"
+        android:pathData="M18,11a6,6 0 1,1 -0.001,0.01" />
+
+    <!-- Цоколь -->
+    <path
+        android:fillColor="#BDBDBD"
+        android:strokeColor="#9E9E9E"
+        android:strokeWidth="0.8"
+        android:pathData="M22,18h4v3h-4z" />
+
+    <!-- Нити накала -->
+    <path
+        android:strokeColor="#FFA000"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M22,16 L24,12 M26,16 L24,12" />
+    <!-- Лучи света -->
+    <path
+        android:strokeColor="#FFD600"
+        android:strokeWidth="1"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M24,0.5v3 M32,4.5l-2,2 M36,13h-3  M12,13h3 M16,4.5l2,2" />
 </vector>

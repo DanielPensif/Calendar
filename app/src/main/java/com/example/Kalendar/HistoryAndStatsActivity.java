@@ -46,7 +46,6 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
 
     private LineChart lineChart;
     private RecyclerView historyRecyclerView;
-    private ImageView flashEffect;
     private HistoryAdapter adapter;
     private List<HistoryItem> historyItems;
     private Spinner spinnerDaysRange;
@@ -64,7 +63,6 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
 
         lineChart = findViewById(R.id.lineChart);
         historyRecyclerView = findViewById(R.id.historyRecyclerView);
-        flashEffect = findViewById(R.id.flashEffect);
         textGraphTitle = findViewById(R.id.textGraphTitle);
 
         Toolbar toolbar = findViewById(R.id.toolbarStats);
@@ -249,7 +247,6 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
             });
         });
     }
-
     @SuppressLint("NotifyDataSetChanged")
     private void sortHistory(int sortMode) {
         if (historyItems == null) return;
@@ -288,7 +285,6 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle("Выбери награду")
                 .setItems(awards, (dialog, which) -> {
-                    flashEffect.startAnimation(AnimationUtils.loadAnimation(this, R.anim.flash_success));
                     dbExecutor.execute(() -> {
                         int calendarId = DatabaseHelper.getDatabase(this)
                                 .calendarDao().getIdByName(item.calendarName);
@@ -304,7 +300,10 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
                             };
                             if (awardCode != null) {
                                 DatabaseHelper.saveAwardForDay(this, dayId, awardCode);
-                                runOnUiThread(() -> adapter.notifyItemChanged(position));
+                                runOnUiThread(() -> {
+                                    item.award = awardCode;
+                                    adapter.notifyItemChanged(position);
+                                });
                             }
                         }
                     });

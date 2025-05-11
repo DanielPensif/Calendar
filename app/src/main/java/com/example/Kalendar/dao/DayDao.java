@@ -34,11 +34,15 @@ public interface DayDao {
     @Query("SELECT * FROM days WHERE id = :id LIMIT 1")
     DayEntity getById(int id);
 
-    @Query("SELECT * FROM days")
-    List<DayEntity> getAllDays();
-
     @Query("SELECT * FROM days WHERE timestamp BETWEEN :start AND :end")
     List<DayEntity> getDaysBetween(long start, long end);
+
+    @Query("SELECT * FROM days WHERE calendarId IN(:calendarIds)")
+    List<DayEntity> getByCalendarIds(List<Integer> calendarIds);
+    @Query("SELECT * FROM days WHERE timestamp = :timestamp AND calendarId IN (:calendarIds)")
+    List<DayEntity> getByTimestampAndCalendarIds(long timestamp, List<Integer> calendarIds);
+    @Query("SELECT * FROM days WHERE timestamp BETWEEN :start AND :end AND calendarId IN (:calendarIds)")
+    List<DayEntity> getDaysBetweenForCalendars(long start, long end, List<Integer> calendarIds);
 
     @Update
     void update(DayEntity day);

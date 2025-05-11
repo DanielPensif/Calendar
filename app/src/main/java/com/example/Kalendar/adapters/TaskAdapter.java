@@ -1,4 +1,5 @@
 package com.example.Kalendar.adapters;
+import android.content.Context;
 import android.graphics.Color;
 import android.view.*;
 import android.widget.*;
@@ -29,8 +30,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     private static final int TYPE_HEADER = 1;
 
     private final OnTaskChangedListener listener;
-
-    public TaskAdapter(List<TaskEntity> tasks, OnTaskChangedListener listener) {
+    private final int currentUserId;
+    public TaskAdapter(Context ctx, List<TaskEntity> tasks, OnTaskChangedListener listener) {
+        this.currentUserId = SessionManager.getLoggedInUserId(ctx);
         this.list = tasks;
         this.listener = listener;
     }
