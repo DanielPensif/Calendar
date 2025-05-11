@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.Kalendar.adapters.HistoryAdapter;
 import com.example.Kalendar.adapters.HistoryItem;
+import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.utils.DatabaseHelper;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -52,6 +53,7 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
     private TextView textGraphTitle;
     private int selectedDays = 7;
     private List<int[]> detailedStats;
+    int userId;
 
     // однопоточный исполнитель для всех БД-задач
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
@@ -286,8 +288,9 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
                 .setTitle("Выбери награду")
                 .setItems(awards, (dialog, which) -> {
                     dbExecutor.execute(() -> {
+                        userId = SessionManager.getLoggedInUserId(this);
                         int calendarId = DatabaseHelper.getDatabase(this)
-                                .calendarDao().getIdByName(item.calendarName);
+                                .calendarDao().getIdByName(item.calendarName, userId);
                         int dayId = DatabaseHelper.getDayIdByTimestampAndCalendarId(
                                 this, item.timestamp, calendarId
                         );

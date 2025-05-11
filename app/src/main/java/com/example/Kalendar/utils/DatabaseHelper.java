@@ -64,7 +64,7 @@ public class DatabaseHelper {
 
         DayEntity day = db.dayDao().getById(dayId);
         if (day != null) {
-            CalendarEntity cal = db.calendarDao().getById(day.calendarId);
+            CalendarEntity cal = db.calendarDao().getById(day.calendarId, userId);
             if (cal != null && cal.userId == userId) {
                 day.awardType = awardType;
                 db.dayDao().update(day);
@@ -237,7 +237,7 @@ public class DatabaseHelper {
             DayEntity day = db.dayDao().getById(dayId);
             if (day == null) return;
 
-            CalendarEntity cal = db.calendarDao().getById(day.calendarId);
+            CalendarEntity cal = db.calendarDao().getById(day.calendarId, userId);
             if (cal == null || cal.userId != userId) return;
 
             List<TaskEntity> tasks = db.taskDao().getTasksByDayId(dayId);

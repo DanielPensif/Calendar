@@ -107,28 +107,47 @@ public class CalendarManagerActivity extends AppCompatActivity {
         });
 
         layout.addView(input);
-        builder.setView(layout);
         layout.addView(colorPickerBtn);
+        builder.setView(layout);
 
-        builder.setPositiveButton("Создать", (dialog, which) -> {
-            String title = input.getText().toString().trim();
-            // ← новый конструктор с userId
-            CalendarEntity entity = new CalendarEntity(
-                    title,
-                    System.currentTimeMillis(),
-                    selectedColor[0],
-                    currentUserId
-            );
-
-            new Thread(() -> {
-                db.calendarDao().insert(entity);
-                runOnUiThread(this::loadCalendars);
-                // …
-            }).start();
-        });
+        builder.setPositiveButton("Создать", null); // обработаем вручную
 
         builder.setNegativeButton("Отмена", null);
-        builder.show();
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String title = input.getText().toString().trim();
+
+            if (title.isEmpty()) {
+                input.setError("Введите название");
+                return;
+            }
+
+            new Thread(() -> {
+                CalendarEntity existing = db.calendarDao().getByTitleAndUserId(title, currentUserId);
+                if (existing != null) {
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "Календарь с таким названием уже существует", Toast.LENGTH_SHORT).show()
+                    );
+                    return;
+                }
+
+                CalendarEntity entity = new CalendarEntity(
+                        title,
+                        System.currentTimeMillis(),
+                        selectedColor[0],
+                        currentUserId
+                );
+
+                db.calendarDao().insert(entity);
+                runOnUiThread(() -> {
+                    loadCalendars();
+                    dialog.dismiss();
+                });
+            }).start();
+        });
     }
 
     private class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.ViewHolder> {

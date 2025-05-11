@@ -16,8 +16,8 @@ public interface CalendarDao {
     @Query("SELECT * FROM calendars")
     List<CalendarEntity> getAll();
 
-    @Query("SELECT * FROM calendars WHERE id = :id LIMIT 1")
-    CalendarEntity getById(int id);
+    @Query("SELECT * FROM calendars WHERE id = :id AND userId = :userId LIMIT 1")
+    CalendarEntity getById(int id, int userId);
 
     @androidx.room.Update
     void update(CalendarEntity calendar);
@@ -25,12 +25,14 @@ public interface CalendarDao {
     @androidx.room.Delete
     void delete(CalendarEntity calendar);
 
-    @Query("SELECT id FROM calendars WHERE title = :name LIMIT 1")
-    int getIdByName(String name);
+    @Query("SELECT id FROM calendars WHERE title = :name AND userId = :userId LIMIT 1")
+    int getIdByName(String name, int userId);
 
     @Query("SELECT * FROM calendars WHERE userId = :userId")
     List<CalendarEntity> getByUserId(int userId);
 
     @Query("SELECT * FROM calendars WHERE userId = :userId")
     List<CalendarEntity> getAllForUser(int userId);
+    @Query("SELECT * FROM calendars WHERE title = :title AND userId = :userId LIMIT 1")
+    CalendarEntity getByTitleAndUserId(String title, int userId);
 }
