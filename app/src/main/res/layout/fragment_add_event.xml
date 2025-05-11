@@ -23,12 +23,26 @@
                 android:layout_height="wrap_content"
                 android:hint="Название события" />
 
-            <CheckBox
-                android:id="@+id/checkAllDay"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Весь день"
-                android:layout_marginTop="12dp" />
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical">
+
+                <CheckBox
+                    android:id="@+id/checkAllDay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Весь день"/>
+
+                <CheckBox
+                    android:id="@+id/checkNotifyEvent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Сообщить о событии"
+                    android:layout_marginStart="16dp"/>
+            </LinearLayout>
 
             <LinearLayout
                 android:orientation="horizontal"
@@ -56,8 +70,28 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Повтор: не повторяется" />
+            <LinearLayout
+                android:id="@+id/reminderEarlyContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical">
 
+                <CheckBox
+                    android:id="@+id/checkReminderEarly"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Напомнить ранее" />
 
+                <TimePicker
+                    android:id="@+id/timePickerEarly"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:timePickerMode="spinner"
+                    android:layout_marginStart="8dp"/>
+            </LinearLayout>
             <Spinner
                 android:id="@+id/spinnerCategory"
                 android:layout_width="match_parent"

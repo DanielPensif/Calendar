@@ -15,7 +15,7 @@ import com.example.Kalendar.models.DayEntity;
 import com.example.Kalendar.models.EventEntity;
 import com.example.Kalendar.models.TaskEntity;
 
-@Database(entities = {DayEntity.class, TaskEntity.class, EventEntity.class, CalendarEntity.class}, version = 1)
+@Database(entities = {DayEntity.class, TaskEntity.class, EventEntity.class, CalendarEntity.class}, version = 2)
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase INSTANCE;
 

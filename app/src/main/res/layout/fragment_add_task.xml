@@ -35,7 +35,29 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"/>
+            <LinearLayout
+                android:id="@+id/reminderContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical">
 
+                <CheckBox
+                    android:id="@+id/checkReminder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Напомнить в" />
+
+                <TimePicker
+                    android:id="@+id/timePickerReminder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:visibility="gone"
+                    android:timePickerMode="spinner"
+                    android:layout_gravity="center_vertical"/>
+            </LinearLayout>
             <EditText
                 android:id="@+id/inputTaskComment"
                 android:layout_width="match_parent"

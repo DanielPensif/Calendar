@@ -32,5 +32,8 @@ public class TaskEntity {
     public int dayId;
     public int calendarId;
     public String doneReason;
+    public boolean reminderEnabled;
+    public int reminderHour;
+    public int reminderMinute;
 }
 

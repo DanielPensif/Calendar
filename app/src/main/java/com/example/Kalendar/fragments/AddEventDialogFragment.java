@@ -1,23 +1,20 @@
 package com.example.Kalendar.fragments;
 
+import android.annotation.SuppressLint;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.*;
+import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.Spinner;
-import android.widget.Toast;
-
 import com.example.Kalendar.R;
+import com.example.Kalendar.adapters.EventReminderReceiver;
 import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.models.CalendarEntity;
 import com.example.Kalendar.models.DayEntity;
@@ -28,18 +25,12 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
 import org.threeten.bp.LocalDate;
+import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.ZoneId;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
 
 public class AddEventDialogFragment extends BottomSheetDialogFragment {
 
@@ -47,26 +38,33 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
     private AppDatabase db;
 
     private EditText inputTitle, inputLocation, inputDescription;
-    private Button btnStart, btnEnd, btnRestoreExcluded;
+    private Button btnStart, btnEnd, btnRepeatRule, btnRestoreExcluded, btnSave;
     private Spinner spinnerCategory, spinnerCalendar;
-    private CheckBox checkAllDay;
-
+    private CheckBox checkAllDay, checkReminderEarly, checkNotifyEvent;
+    private TimePicker timePickerEarly;
     private LinearLayout excludedDatesLayout;
     private ChipGroup chipGroupExcluded;
-    private Set<LocalDate> editableExdates = new HashSet<>();
 
-    private String selectedStart = "09:00";
-    private String selectedEnd = "10:00";
-
-    private OnEventSavedListener listener;
-
-    private final List<CalendarEntity> calendarEntities = new ArrayList<>();
-
+    private String selectedStart = "09:00", selectedEnd = "10:00";
     private String repeatRule = null;
-    private String repeatDisplay = "Повтор: не повторяется";
-    private Button btnRepeatRule;
+    private final List<CalendarEntity> calendarEntities = new ArrayList<>();
+    private Set<LocalDate> editableExdates = new HashSet<>();
+    private Integer editEventId = null;
+    private OnEventSavedListener listener;
+    private Integer preselectedCalendarId = null;
+    public void setPreselectedCalendarId(Integer id) {
+        this.preselectedCalendarId = id;
+    }
 
+    private int toMinutes(String time) {
+        String[] parts = time.split(":");
+        return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);
+    }
 
+    public interface OnEventSavedListener {
+        void onEventSaved();
+    }
+    public void setOnEventSavedListener(OnEventSavedListener l) { listener = l; }
 
     public static AddEventDialogFragment newInstance(LocalDate date) {
         AddEventDialogFragment f = new AddEventDialogFragment();
@@ -85,105 +83,129 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
         return f;
     }
 
-
-
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle bs) {
         View view = inflater.inflate(R.layout.fragment_add_event, container, false);
         db = AppDatabase.getDatabase(requireContext());
-        date = LocalDate.parse(Objects.requireNonNull(requireArguments().getString("date")));
+        date = LocalDate.parse(requireArguments().getString("date"));
 
-        inputTitle = view.findViewById(R.id.inputTitle);
-        inputLocation = view.findViewById(R.id.inputLocation);
-        inputDescription = view.findViewById(R.id.inputDescription);
-        btnStart = view.findViewById(R.id.btnStartTime);
-        btnEnd = view.findViewById(R.id.btnEndTime);
-        checkAllDay = view.findViewById(R.id.checkAllDay);
+        inputTitle      = view.findViewById(R.id.inputTitle);
+        inputLocation   = view.findViewById(R.id.inputLocation);
+        inputDescription= view.findViewById(R.id.inputDescription);
+        btnStart        = view.findViewById(R.id.btnStartTime);
+        btnEnd          = view.findViewById(R.id.btnEndTime);
+        checkAllDay     = view.findViewById(R.id.checkAllDay);
+        checkReminderEarly = view.findViewById(R.id.checkReminderEarly);
+        timePickerEarly = view.findViewById(R.id.timePickerEarly);
+        checkNotifyEvent= view.findViewById(R.id.checkNotifyEvent);
         spinnerCategory = view.findViewById(R.id.spinnerCategory);
         spinnerCalendar = view.findViewById(R.id.spinnerCalendar);
+        btnRepeatRule   = view.findViewById(R.id.btnRepeatRule);
         excludedDatesLayout = view.findViewById(R.id.excludedDatesLayout);
-        chipGroupExcluded = view.findViewById(R.id.chipGroupExcluded);
-        btnRestoreExcluded = view.findViewById(R.id.btnRestoreExcluded);
-        btnRepeatRule = view.findViewById(R.id.btnRepeatRule);
-        repeatDisplay = "Повтор: не повторяется";
-        btnRepeatRule.setText(repeatDisplay);
-        btnRepeatRule.setOnClickListener(v -> {
-            RepeatRuleDialogFragment dialog = RepeatRuleDialogFragment.newInstance(repeatRule);
-            dialog.setOnRepeatSelectedListener((rule, displayText) -> {
-                repeatRule = rule;
-                repeatDisplay = displayText;
-                btnRepeatRule.setText(displayText);
-            });
-            dialog.show(getParentFragmentManager(), "repeatRule");
-        });
+        chipGroupExcluded   = view.findViewById(R.id.chipGroupExcluded);
+        btnRestoreExcluded  = view.findViewById(R.id.btnRestoreExcluded);
+        btnSave         = view.findViewById(R.id.btnSaveEvent);
+        timePickerEarly    .setIs24HourView(true);
 
-
-        Button btnSave = view.findViewById(R.id.btnSaveEvent);
-        btnSave.setOnClickListener(v -> saveEvent());
-
-        selectedStart = "13:00";
-        selectedEnd = "14:00";
-        btnStart.setText("Начало: 13:00");
-        btnEnd.setText("Конец: 14:00");
-
-        checkAllDay.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            btnStart.setEnabled(!isChecked);
-            btnEnd.setEnabled(!isChecked);
-        });
-
+        // инициализация UI
         setupSpinners();
         setupTimePickers();
+
+        // чекбоксы показывают TimePicker
+        checkReminderEarly.setOnCheckedChangeListener((b,c) ->
+                timePickerEarly.setVisibility(c?View.VISIBLE:View.GONE)
+        );
+        btnRepeatRule.setText("Повтор: не повторяется");
+        btnRepeatRule.setOnClickListener(v -> {
+            RepeatRuleDialogFragment dlg = RepeatRuleDialogFragment.newInstance(repeatRule);
+            dlg.setOnRepeatSelectedListener((rule, txt) -> {
+                repeatRule = rule; btnRepeatRule.setText(txt);
+            });
+            dlg.show(getParentFragmentManager(), "repeatRule");
+        });
+
+        checkAllDay.setOnCheckedChangeListener((b, all) -> {
+            btnStart.setEnabled(!all);
+            btnEnd.setEnabled(!all);
+        });
 
         btnRestoreExcluded.setOnClickListener(v -> {
             editableExdates.clear();
             btnRestoreExcluded.setVisibility(View.GONE);
             renderExcludedDates();
-            Toast.makeText(getContext(), "Все исключённые даты восстановлены", Toast.LENGTH_SHORT).show();
         });
 
-        if (getArguments() != null && getArguments().containsKey("editEventId")) {
-            int eventId = getArguments().getInt("editEventId");
+        btnSave.setOnClickListener(v -> saveEvent());
 
+        // если редактирование — подтягиваем EventEntity
+        if (getArguments()!=null && getArguments().containsKey("editEventId")) {
+            editEventId = getArguments().getInt("editEventId");
             new Thread(() -> {
-                EventEntity event = db.eventDao().getById(eventId);
-                if (event != null) {
-                    requireActivity().runOnUiThread(() -> {
-                        spinnerCategory.post(() -> {
-                            inputTitle.setText(event.title);
-                            inputLocation.setText(event.location);
-                            inputDescription.setText(event.description);
-
-                            checkAllDay.setChecked(event.allDay);
-                            btnStart.setText("Начало: " + event.timeStart);
-                            btnEnd.setText("Конец: " + event.timeEnd);
-                            selectedStart = event.timeStart;
-                            selectedEnd = event.timeEnd;
-
-                            spinnerCategory.setSelection(getIndex(spinnerCategory, event.category));
-                            spinnerCalendar.setSelection(getCalendarIndex(event.calendarId));
-
-                            if (event.repeatRule != null) {
-                                repeatRule = event.repeatRule;
-                                repeatDisplay = "Повтор: " + EventUtils.parseDisplayFromRule(repeatRule);
-                                btnRepeatRule.setText(repeatDisplay);
-                            }
-
-                            if (event.excludedDates != null && !event.excludedDates.trim().isEmpty()) {
-                                editableExdates = EventUtils.parseExcludedDates(event.excludedDates);
-                                renderExcludedDates();
-                                btnRestoreExcluded.setVisibility(View.VISIBLE);
-                            }
-                        });
-                    });
-                }
+                EventEntity ev = db.eventDao().getById(editEventId);
+                if (ev==null) return;
+                requireActivity().runOnUiThread(() -> {
+                    inputTitle.setText(ev.title);
+                    inputLocation.setText(ev.location);
+                    inputDescription.setText(ev.description);
+                    checkAllDay.setChecked(ev.allDay);
+                    btnStart.setText("Начало: " + ev.timeStart);
+                    btnEnd.setText("Конец: " + ev.timeEnd);
+                    selectedStart = ev.timeStart; selectedEnd = ev.timeEnd;
+                    spinnerCategory.setSelection(getIndex(spinnerCategory, ev.category));
+                    spinnerCalendar.setSelection(getCalendarIndex(ev.calendarId));
+                    // reminder
+                    checkReminderEarly.setChecked(ev.earlyReminderEnabled);
+                    timePickerEarly.setHour(ev.earlyReminderHour);
+                    timePickerEarly.setMinute(ev.earlyReminderMinute);
+                    timePickerEarly.setVisibility(ev.earlyReminderEnabled?View.VISIBLE:View.GONE);
+                    checkNotifyEvent.setChecked(ev.notifyOnStart);
+                    // repeats/excluded
+                    if (ev.repeatRule!=null) {
+                        repeatRule = ev.repeatRule;
+                        btnRepeatRule.setText("Повтор: " + EventUtils.parseDisplayFromRule(ev.repeatRule));
+                    }
+                    if (ev.excludedDates!=null) {
+                        editableExdates = EventUtils.parseExcludedDates(ev.excludedDates);
+                        renderExcludedDates();
+                        btnRestoreExcluded.setVisibility(View.VISIBLE);
+                    }
+                });
             }).start();
         }
 
-
         return view;
+    }
+
+    private void setupSpinners() {
+        ArrayAdapter<String> cat = new ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_spinner_dropdown_item,
+                Arrays.asList("Работа","Личное","Встреча","Учёба"));
+        spinnerCategory.setAdapter(cat);
+
+        new Thread(() -> {
+            List<CalendarEntity> cals = db.calendarDao().getAll();
+            List<String> titles = new ArrayList<>();
+            for (CalendarEntity c : cals) titles.add(c.title);
+            requireActivity().runOnUiThread(() -> {
+                calendarEntities.clear(); calendarEntities.addAll(cals);
+                ArrayAdapter<String> cad = new ArrayAdapter<>(requireContext(),
+                        android.R.layout.simple_spinner_dropdown_item,
+                        titles);
+                spinnerCalendar.setAdapter(cad);
+            });
+        }).start();
+    }
+
+    private void setupTimePickers() {
+        btnStart.setOnClickListener(v -> showTimePicker((t)->{
+            selectedStart = t; btnStart.setText("Начало: "+t);
+        }));
+        btnEnd.setOnClickListener(v -> showTimePicker((t)->{
+            selectedEnd = t; btnEnd.setText("Конец: "+t);
+        }));
+        // ранний:
+        timePickerEarly.setVisibility(View.GONE);
     }
 
     private void renderExcludedDates() {
@@ -193,229 +215,192 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
         }
         excludedDatesLayout.setVisibility(View.VISIBLE);
         chipGroupExcluded.removeAllViews();
-        for (LocalDate date : new TreeSet<>(editableExdates)) {
+        for (LocalDate d : new TreeSet<>(editableExdates)) {
             Chip chip = new Chip(requireContext());
-            chip.setText(date.toString());
+            chip.setText(d.toString());
             chip.setCloseIconVisible(true);
             chip.setOnCloseIconClickListener(v -> {
-                editableExdates.remove(date);
+                editableExdates.remove(d);
                 renderExcludedDates();
-                if (editableExdates.isEmpty()) {
-                    btnRestoreExcluded.setVisibility(View.GONE);
-                }
+                if (editableExdates.isEmpty()) btnRestoreExcluded.setVisibility(View.GONE);
             });
             chipGroupExcluded.addView(chip);
         }
     }
 
-
-    private int getIndex(Spinner spinner, String value) {
-        for (int i = 0; i < spinner.getCount(); i++) {
-            if (spinner.getItemAtPosition(i).toString().equalsIgnoreCase(value)) {
-                return i;
-            }
-        }
+    private int getIndex(Spinner sp, String val) {
+        for (int i=0; i<sp.getCount(); i++)
+            if (sp.getItemAtPosition(i).toString().equalsIgnoreCase(val)) return i;
         return 0;
     }
-
-    private int getCalendarIndex(int calendarId) {
-        for (int i = 0; i < calendarEntities.size(); i++) {
-            if (calendarEntities.get(i).id == calendarId) return i;
-        }
+    private int getCalendarIndex(int id) {
+        for (int i=0; i<calendarEntities.size(); i++)
+            if (calendarEntities.get(i).id==id) return i;
         return 0;
-    }
-
-
-    public interface OnEventSavedListener {
-        void onEventSaved();
-    }
-
-    public void setOnEventSavedListener(OnEventSavedListener listener) {
-        this.listener = listener;
     }
 
     private void saveEvent() {
-        if (!checkAllDay.isChecked()) {
-            int startMinutes = toMinutes(selectedStart);
-            int endMinutes = toMinutes(selectedEnd);
-            if (endMinutes <= startMinutes) {
-                Toast.makeText(getContext(), "Время окончания должно быть позже начала", Toast.LENGTH_SHORT).show();
-                return;
-            }
-        }
+        // Сначала собираем всё из UI
+        String title       = inputTitle.getText().toString().trim();
+        String location    = inputLocation.getText().toString().trim();
+        String description = inputDescription.getText().toString().trim();
+        boolean allDay     = checkAllDay.isChecked();
+        boolean earlyRem   = checkReminderEarly.isChecked();
+        int earlyHour      = timePickerEarly.getHour();
+        int earlyMinute    = timePickerEarly.getMinute();
+        boolean notifyOnStart = checkNotifyEvent.isChecked();
 
-        String title = inputTitle.getText().toString().trim();
         if (title.isEmpty()) {
             Toast.makeText(getContext(), "Введите название", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        String timeStart = checkAllDay.isChecked() ? "00:00" : selectedStart;
-        String timeEnd = checkAllDay.isChecked() ? "23:59" : selectedEnd;
-        boolean allDay = checkAllDay.isChecked();
-        String category = spinnerCategory.getSelectedItem().toString();
-        String location = inputLocation.getText().toString();
-        String description = inputDescription.getText().toString();
-
-        int index = spinnerCalendar.getSelectedItemPosition();
-        if (index < 0 || index >= calendarEntities.size()) {
-            Toast.makeText(getContext(), "Не выбран календарь", Toast.LENGTH_SHORT).show();
-            return;
+        // Проверяем корректность времени
+        if (!allDay) {
+            int startMin = toMinutes(selectedStart);
+            int endMin   = toMinutes(selectedEnd);
+            if (endMin <= startMin) {
+                Toast.makeText(getContext(), "Время окончания должно быть позже начала", Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
 
-        int calendarId = calendarEntities.get(index).id;
+        int calendarId = calendarEntities.get(spinnerCalendar.getSelectedItemPosition()).id;
+        String timeStart = allDay ? "00:00" : selectedStart;
+        String timeEnd   = allDay ? "23:59" : selectedEnd;
 
         new Thread(() -> {
-            EventEntity event = new EventEntity();
-            event.title = title;
-            event.timeStart = timeStart;
-            event.timeEnd = timeEnd;
-            event.allDay = allDay;
-            event.category = category;
-            event.location = location;
-            event.description = description;
-            event.calendarId = calendarId;
-            event.repeatRule = repeatRule;
-
-            if (getArguments() != null && getArguments().containsKey("editEventId")) {
-                int eventId = getArguments().getInt("editEventId");
-                EventEntity old = db.eventDao().getById(eventId);
-
-                event.id = eventId;
-                event.dayId = old.dayId;
-
-                boolean repeatChanged = !Objects.equals(old.repeatRule, event.repeatRule);
-
-                if (!editableExdates.isEmpty()) {
-                    event.excludedDates = editableExdates.stream()
-                            .map(LocalDate::toString)
-                            .sorted()
-                            .collect(Collectors.joining(","));
-                } else {
-                    event.excludedDates = null;
-                }
-
-                if (repeatChanged) {
-                    event.excludedDates = null;
-                } else {
-                    if (!editableExdates.isEmpty()) {
-                        event.excludedDates = editableExdates.stream()
-                                .map(LocalDate::toString)
-                                .sorted()
-                                .collect(Collectors.joining(","));
-                    } else {
-                        event.excludedDates = null;
-                    }
-                }
-
-
-                db.eventDao().update(event);
-            } else {
-                long timestamp = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
-                DayEntity day = db.dayDao().getByTimestampAndCalendarId(timestamp, calendarId);
-                if (day == null) {
-                    day = new DayEntity();
-                    day.timestamp = timestamp;
-                    day.calendarId = calendarId;
-                    day.id = (int) db.dayDao().insert(day);
-                }
-
-                event.dayId = day.id;
-
-                if (!editableExdates.isEmpty()) {
-                    event.excludedDates = editableExdates.stream()
-                            .map(LocalDate::toString)
-                            .sorted()
-                            .collect(Collectors.joining(","));
-                } else {
-                    event.excludedDates = null;
-                }
-
-
-                db.eventDao().insert(event);
+            // 1) Сохраняем событие и получаем его ID
+            long ts = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            DayEntity day = db.dayDao().getByTimestampAndCalendarId(ts, calendarId);
+            if (day == null) {
+                day = new DayEntity();
+                day.timestamp  = ts;
+                day.calendarId = calendarId;
+                day.id         = (int) db.dayDao().insert(day);
             }
 
+            EventEntity event;
+            boolean isEdit = getArguments() != null && getArguments().containsKey("editEventId");
+            if (isEdit) {
+                int evtId = getArguments().getInt("editEventId");
+                EventEntity old = db.eventDao().getById(evtId);
+                if (old == null) return;
+                event = old;
+            } else {
+                event = new EventEntity();
+            }
 
+            event.title                = title;
+            event.location             = location;
+            event.description          = description;
+            event.timeStart            = timeStart;
+            event.timeEnd              = timeEnd;
+            event.allDay               = allDay;
+            event.category             = spinnerCategory.getSelectedItem().toString();
+            event.calendarId           = calendarId;
+            event.repeatRule           = repeatRule;
+            event.earlyReminderEnabled = earlyRem;
+            event.earlyReminderHour    = earlyHour;
+            event.earlyReminderMinute  = earlyMinute;
+            event.notifyOnStart = notifyOnStart;
 
+            if (!editableExdates.isEmpty()) {
+                event.excludedDates = editableExdates.stream()
+                        .map(LocalDate::toString)
+                        .sorted()
+                        .collect(Collectors.joining(","));
+            }
+
+            event.dayId = day.id;
+
+            if (isEdit) {
+                db.eventDao().update(event);
+            } else {
+                event.id = (int) db.eventDao().insert(event);
+            }
+
+            // 2) Обновляем UI: закрываем диалог и вызываем колбэк
             requireActivity().runOnUiThread(() -> {
                 if (listener != null) listener.onEventSaved();
                 dismiss();
             });
-        }).start();
-    }
 
+            // 3) Планируем уведомления (уничтожаем все исключения)
+            try {
+                // момент старта события в миллисекундах
+                String[] parts = timeStart.split(":");
+                LocalDateTime ldt = date.atTime(
+                        Integer.parseInt(parts[0]),
+                        Integer.parseInt(parts[1])
+                );
+                long eventStartMs = ldt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-
-    private int toMinutes(String time) {
-        String[] parts = time.split(":");
-        return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);
-    }
-
-
-    private Integer preselectedCalendarId = null;
-    public void setPreselectedCalendarId(Integer id) {
-        this.preselectedCalendarId = id;
-    }
-
-
-        private void setupSpinners() {
-
-        if (preselectedCalendarId != null) {
-            for (int i = 0; i < calendarEntities.size(); i++) {
-                if (calendarEntities.get(i).id == preselectedCalendarId) {
-                    spinnerCalendar.setSelection(i);
-                    break;
+                // 3.1. Раннее напоминание
+                if (earlyRem) {
+                    scheduleEventNotification(
+                            requireContext(),
+                            /* уникальный код */ event.id,
+                            "Напоминание о событии! '" + title + "'",
+                            description,
+                            earlyHour, earlyMinute,
+                            eventStartMs,
+                            /* isEarly= */ true
+                    );
                 }
+                // 3.2. Напоминание в момент старта
+                if (notifyOnStart) {
+                    scheduleEventNotification(
+                            requireContext(),
+                            /* отличный код */ event.id + 1000,
+                            "Самое время события! '" + title + "'",
+                            description,
+                            /* время игнорируем */ 0, 0,
+                            eventStartMs,
+                            /* isEarly= */ false
+                    );
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }
-
-        ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_dropdown_item,
-                Arrays.asList("Работа", "Личное", "Встреча", "Учёба"));
-        spinnerCategory.setAdapter(categoryAdapter);
-
-        new Thread(() -> {
-            List<CalendarEntity> calendars = db.calendarDao().getAll();
-            List<String> titles = new ArrayList<>();
-            for (CalendarEntity cal : calendars) titles.add(cal.title);
-
-            requireActivity().runOnUiThread(() -> {
-                calendarEntities.clear();
-                calendarEntities.addAll(calendars);
-
-                ArrayAdapter<String> calendarAdapter = new ArrayAdapter<>(requireContext(),
-                        android.R.layout.simple_spinner_dropdown_item, titles);
-                spinnerCalendar.setAdapter(calendarAdapter);
-
-                if (preselectedCalendarId != null) {
-                    for (int i = 0; i < calendarEntities.size(); i++) {
-                        if (calendarEntities.get(i).id == preselectedCalendarId) {
-                            spinnerCalendar.setSelection(i);
-                            break;
-                        }
-                    }
-                }
-            });
         }).start();
-    }
-
-    private void setupTimePickers() {
-        btnStart.setOnClickListener(v -> showTimePicker((time) -> {
-            selectedStart = time;
-            btnStart.setText("Начало: " + time);
-        }));
-        btnEnd.setOnClickListener(v -> showTimePicker((time) -> {
-            selectedEnd = time;
-            btnEnd.setText("Конец: " + time);
-        }));
     }
 
     private void showTimePicker(Consumer<String> onPicked) {
-        TimePickerDialog dialog = new TimePickerDialog(getContext(),
-                (view, hour, minute) -> {
-                    String time = String.format("%02d:%02d", hour, minute);
-                    onPicked.accept(time);
-                }, 9, 0, true);
-        dialog.show();
+        new TimePickerDialog(getContext(), (tp, h, m) -> {
+            String t = String.format(Locale.getDefault(), "%02d:%02d", h, m);
+            onPicked.accept(t);
+        }, 9,0,true).show();
+    }
+
+    @SuppressLint("ScheduleExactAlarm")
+    private void scheduleEventNotification(Context ctx,
+                                           int requestCode,
+                                           String title,
+                                           String text,
+                                           int earlyHour,
+                                           int earlyMinute,
+                                           long eventStartMs,
+                                           boolean isEarly) {
+        Intent intent = new Intent(ctx, EventReminderReceiver.class);
+        intent.putExtra("title", title);
+        intent.putExtra("text",  text);
+        PendingIntent pi = PendingIntent.getBroadcast(
+                ctx, requestCode, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        long triggerAt = eventStartMs;
+        if (isEarly) {
+            Calendar c = Calendar.getInstance();
+            c.setTimeInMillis(eventStartMs);
+            c.set(Calendar.HOUR_OF_DAY, earlyHour);
+            c.set(Calendar.MINUTE, earlyMinute);
+            c.set(Calendar.SECOND, 0);
+            if (c.before(Calendar.getInstance())) c.add(Calendar.DAY_OF_YEAR, 1);
+            triggerAt = c.getTimeInMillis();
+        }
+        AlarmManager am = ctx.getSystemService(AlarmManager.class);
+        am.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pi);
     }
 }

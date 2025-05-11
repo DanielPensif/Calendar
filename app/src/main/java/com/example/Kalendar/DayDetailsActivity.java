@@ -105,4 +105,5 @@ public class DayDetailsActivity extends AppCompatActivity {
             }
         });
     }
+
 }
