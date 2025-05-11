@@ -2,6 +2,9 @@ package com.example.Kalendar;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.util.Pair;
 import android.view.View;
 import android.view.animation.AnimationUtils;
@@ -27,6 +30,8 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -47,6 +52,7 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
     private Spinner spinnerDaysRange;
     private TextView textGraphTitle;
     private int selectedDays = 7;
+    private List<int[]> detailedStats;
 
     // однопоточный исполнитель для всех БД-задач
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
@@ -119,71 +125,106 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
 
     private void loadGraphDataAsync() {
         dbExecutor.execute(() -> {
-            List<int[]> stats = DatabaseHelper.getDetailedTaskStatsForLastNDays(this, selectedDays);
-            runOnUiThread(() -> updateChart(stats));
+            List<Integer> totalTasks     = DatabaseHelper.getTaskCountsForLastNDays(this, selectedDays, false);
+            List<Integer> completedTasks = DatabaseHelper.getTaskCountsForLastNDays(this, selectedDays, true);
+            List<int[]> stats            = DatabaseHelper.getDetailedTaskStatsForLastNDays(this, selectedDays);
+            runOnUiThread(() -> updateChart(totalTasks, completedTasks, stats));
         });
     }
 
-    private void updateChart(List<int[]> stats) {
-        List<Entry> totalEntries = new ArrayList<>();
-        List<Entry> completedEntries = new ArrayList<>();
+    private void updateChart(List<Integer> totalTasks,
+                             List<Integer> completedTasks,
+                             List<int[]> stats){
+        this.detailedStats = stats; // сохраняем для кликов
+
+        List<Entry> totalEntries        = new ArrayList<>();
+        List<Entry> completedEntries    = new ArrayList<>();
         List<Entry> notCompletedEntries = new ArrayList<>();
 
         for (int i = 0; i < stats.size(); i++) {
             int[] day = stats.get(i);
-            totalEntries.add(new Entry(i, day[0]));
+            totalEntries.    add(new Entry(i, day[0]));
             completedEntries.add(new Entry(i, day[1]));
             notCompletedEntries.add(new Entry(i, day[2]));
         }
 
-        LineDataSet totalDataSet = new LineDataSet(totalEntries, "Все задачи");
-        totalDataSet.setColor(0xFF1E88E5);
-        totalDataSet.setCircleColor(0xFF1E88E5);
-
+        LineDataSet totalDataSet = new LineDataSet(totalEntries,       "Все задачи");
         LineDataSet completedDataSet = new LineDataSet(completedEntries, "Выполненные");
-        completedDataSet.setColor(0xFFFFD700);
-        completedDataSet.setCircleColor(0xFFFFD700);
-
         LineDataSet notCompletedDataSet = new LineDataSet(notCompletedEntries, "Невыполненные");
-        notCompletedDataSet.setColor(0xFFFF4444);
-        notCompletedDataSet.setCircleColor(0xFFFF4444);
 
+        // настройки датасетов (цвет, толщина, размер текста)
         for (LineDataSet set : List.of(totalDataSet, completedDataSet, notCompletedDataSet)) {
             set.setLineWidth(2f);
             set.setCircleRadius(4f);
-            set.setValueTextSize(14f); // увеличенный текст
+            set.setValueTextSize(14f);
         }
+        totalDataSet.setColor(0xFF1E88E5);       totalDataSet.setCircleColor(0xFF1E88E5);
+        completedDataSet.setColor(0xFFFFD700);   completedDataSet.setCircleColor(0xFFFFD700);
+        notCompletedDataSet.setColor(0xFFFF4444);notCompletedDataSet.setCircleColor(0xFFFF4444);
 
         LineData lineData = new LineData(totalDataSet, completedDataSet, notCompletedDataSet);
         lineData.setDrawValues(false);
 
         lineChart.setData(lineData);
 
+        // ось X
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setGranularity(1f);
-        xAxis.setTextSize(14f); // увеличенный текст
+        xAxis.setTextSize(14f);
         xAxis.setLabelRotationAngle(-45);
         xAxis.setValueFormatter(new ValueFormatter() {
-            private final SimpleDateFormat dateFormat = new SimpleDateFormat("d MMM", Locale.getDefault());
-            private final Calendar calendar = Calendar.getInstance();
+            private final SimpleDateFormat df = new SimpleDateFormat("d MMM", Locale.getDefault());
+            private final Calendar cal = Calendar.getInstance();
             @Override
             public String getFormattedValue(float value) {
-                calendar.setTimeInMillis(System.currentTimeMillis());
-                calendar.add(Calendar.DAY_OF_YEAR, (int) value - (selectedDays - 1));
-                return dateFormat.format(calendar.getTime());
+                cal.setTimeInMillis(System.currentTimeMillis());
+                cal.add(Calendar.DAY_OF_YEAR, (int) value - (selectedDays - 1));
+                return df.format(cal.getTime());
             }
         });
 
+        // ось Y и легенда
         YAxis leftAxis = lineChart.getAxisLeft();
         leftAxis.setGranularity(1f);
-        leftAxis.setTextSize(14f); // увеличенный текст
+        leftAxis.setTextSize(14f);
         leftAxis.setAxisMinimum(0f);
 
         lineChart.getAxisRight().setEnabled(false);
         lineChart.getDescription().setEnabled(false);
-        lineChart.getLegend().setEnabled(true);
-        lineChart.getLegend().setTextSize(14f); // увеличенный текст
+        lineChart.getLegend().setTextSize(14f);
+
+        // добавляем обработчик клика по точке
+        lineChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
+            @Override public void onNothingSelected() {}
+
+            @Override
+            public void onValueSelected(Entry e, Highlight h) {
+                int idx = (int) e.getX();
+                int[] day = detailedStats.get(idx);
+                int all     = day[0];
+                int done    = day[1];
+                int notDone = day[2];
+
+                String msg =
+                        "● Всего задач:    " + all     + "\n" +
+                                "● Выполнено:      " + done    + "\n" +
+                                "● Не выполнено:   " + notDone;
+
+                SpannableString ss = new SpannableString(msg);
+                ss.setSpan(new ForegroundColorSpan(0xFF1E88E5), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                int p2 = msg.indexOf('●', 1);
+                ss.setSpan(new ForegroundColorSpan(0xFFFFD700), p2, p2+1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                int p3 = msg.indexOf('●', p2+1);
+                ss.setSpan(new ForegroundColorSpan(0xFFFF4444), p3, p3+1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                new AlertDialog.Builder(HistoryAndStatsActivity.this)
+                        .setTitle("Статистика за день")
+                        .setMessage(ss)
+                        .setPositiveButton("OK", null)
+                        .show();
+            }
+        });
 
         lineChart.animateX(1000);
         lineChart.invalidate();

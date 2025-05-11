@@ -1,14 +1,22 @@
 package com.example.Kalendar;
 
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import android.Manifest;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.Kalendar.db.AppDatabase;
@@ -26,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView navHomeIcon, navCalendarIcon, navProfileIcon;
     private TextView navHome, navCalendar, navProfile;
     private AppDatabase db;
+    private static final int REQUEST_CODE_POST_NOTIFICATIONS = 1001;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
             selectTab("profile");
             loadFragment(new ProfileFragment());
         });
+        requestNotificationPermissionIfNeeded();
     }
 
     private void selectTab(String tab) {
@@ -99,7 +109,49 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
     }
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
 
+                // Опционально: показать rationale, если отказали ранее
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.POST_NOTIFICATIONS)) {
+                    new AlertDialog.Builder(this)
+                            .setTitle("Разрешить уведомления?")
+                            .setMessage("Чтобы приложение могло напоминать вам о задачах и событиях, нужно разрешение на отправку уведомлений.")
+                            .setPositiveButton("Разрешить", (d, w) -> {
+                                ActivityCompat.requestPermissions(MainActivity.this,
+                                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                                        REQUEST_CODE_POST_NOTIFICATIONS);
+                            })
+                            .setNegativeButton("Не сейчас", null)
+                            .show();
+                } else {
+                    // Первый запрос или после «Не спрашивать»
+                    ActivityCompat.requestPermissions(this,
+                            new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                            REQUEST_CODE_POST_NOTIFICATIONS);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE_POST_NOTIFICATIONS) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Уведомления включены", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Уведомления запрещены", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
     private void loadFragment(Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
