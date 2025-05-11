@@ -1,5 +1,6 @@
 package com.example.Kalendar.fragments;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -12,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.example.Kalendar.AuthActivity;
@@ -28,7 +30,7 @@ public class ProfileFragment extends Fragment {
     private ImageView profileImage;
     private TextView profileName, profileNickname, profileDescription;
     private Button statsButton;
-    private Button btnLogout;
+    private ImageView btnLogout;
 
     @Nullable
     @Override
@@ -56,7 +58,14 @@ public class ProfileFragment extends Fragment {
             Intent intent = new Intent(getContext(), HistoryAndStatsActivity.class);
             startActivity(intent);
         });
-        btnLogout.setOnClickListener(v -> logout());
+        btnLogout.setOnClickListener(v -> {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Выход из аккаунта")
+                    .setMessage("Вы уверены, что хотите выйти из аккаунта?")
+                    .setPositiveButton("Да", (dialog, which) -> logout())
+                    .setNegativeButton("Отмена", null)
+                    .show();
+        });
     }
 
     private void openGallery() {
