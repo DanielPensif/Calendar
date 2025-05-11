@@ -15,6 +15,7 @@ import androidx.annotation.Nullable;
 
 import com.example.Kalendar.R;
 import com.example.Kalendar.adapters.EventReminderReceiver;
+import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.models.CalendarEntity;
 import com.example.Kalendar.models.DayEntity;
@@ -52,6 +53,7 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
     private Integer editEventId = null;
     private OnEventSavedListener listener;
     private Integer preselectedCalendarId = null;
+    private int currentUserId;
     public void setPreselectedCalendarId(Integer id) {
         this.preselectedCalendarId = id;
     }
@@ -89,6 +91,7 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
         View view = inflater.inflate(R.layout.fragment_add_event, container, false);
         db = AppDatabase.getDatabase(requireContext());
         date = LocalDate.parse(requireArguments().getString("date"));
+        currentUserId = SessionManager.getLoggedInUserId(requireContext());
 
         inputTitle      = view.findViewById(R.id.inputTitle);
         inputLocation   = view.findViewById(R.id.inputLocation);
@@ -184,15 +187,22 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
         spinnerCategory.setAdapter(cat);
 
         new Thread(() -> {
-            List<CalendarEntity> cals = db.calendarDao().getAll();
+            List<CalendarEntity> cals = db.calendarDao().getByUserId(currentUserId);
             List<String> titles = new ArrayList<>();
             for (CalendarEntity c : cals) titles.add(c.title);
             requireActivity().runOnUiThread(() -> {
-                calendarEntities.clear(); calendarEntities.addAll(cals);
-                ArrayAdapter<String> cad = new ArrayAdapter<>(requireContext(),
-                        android.R.layout.simple_spinner_dropdown_item,
-                        titles);
-                spinnerCalendar.setAdapter(cad);
+                calendarEntities.clear();
+                calendarEntities.addAll(cals);
+                spinnerCalendar.setAdapter(
+                        new ArrayAdapter<>(requireContext(),
+                                android.R.layout.simple_spinner_dropdown_item,
+                                titles)
+                );
+                // Если есть заранее выбранный календарь:
+                if (preselectedCalendarId != null) {
+                    spinnerCalendar.setSelection(
+                            getCalendarIndex(preselectedCalendarId));
+                }
             });
         }).start();
     }

@@ -10,6 +10,7 @@ import android.text.TextWatcher;
 import android.view.*;
 import android.widget.*;
 
+import com.example.Kalendar.adapters.SessionManager;
 import com.flask.colorpicker.ColorPickerView;
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
 
@@ -32,6 +33,8 @@ public class CalendarManagerActivity extends AppCompatActivity {
     private AppDatabase db;
     private CalendarAdapter adapter;
     private final List<CalendarEntity> calendarList = new ArrayList<>();
+    private int currentUserId;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,7 +52,7 @@ public class CalendarManagerActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         db = AppDatabase.getDatabase(this);
-
+        currentUserId = SessionManager.getLoggedInUserId(this);
         RecyclerView recyclerView = findViewById(R.id.calendarRecycler);
         MaterialButton addCalendarBtn = findViewById(R.id.addCalendarBtn);
 
@@ -65,7 +68,8 @@ public class CalendarManagerActivity extends AppCompatActivity {
     @SuppressLint("NotifyDataSetChanged")
     private void loadCalendars() {
         new Thread(() -> {
-            List<CalendarEntity> all = db.calendarDao().getAll();
+            // вместо getAll() — только мои календари
+            List<CalendarEntity> all = db.calendarDao().getByUserId(currentUserId);
             calendarList.clear();
             calendarList.addAll(all);
             runOnUiThread(() -> adapter.notifyDataSetChanged());
@@ -108,16 +112,18 @@ public class CalendarManagerActivity extends AppCompatActivity {
 
         builder.setPositiveButton("Создать", (dialog, which) -> {
             String title = input.getText().toString().trim();
-            CalendarEntity entity = new CalendarEntity(title, System.currentTimeMillis(), selectedColor[0]);
-
+            // ← новый конструктор с userId
+            CalendarEntity entity = new CalendarEntity(
+                    title,
+                    System.currentTimeMillis(),
+                    selectedColor[0],
+                    currentUserId
+            );
 
             new Thread(() -> {
                 db.calendarDao().insert(entity);
                 runOnUiThread(this::loadCalendars);
-                Intent intent = new Intent();
-                intent.putExtra("calendarUpdated", true);
-                setResult(RESULT_OK, intent);
-
+                // …
             }).start();
         });
 

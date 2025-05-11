@@ -14,8 +14,11 @@ import android.widget.*;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.Kalendar.AuthActivity;
 import com.example.Kalendar.HistoryAndStatsActivity;
 import com.example.Kalendar.R;
+import com.example.Kalendar.adapters.SessionManager;
+
 import java.io.IOException;
 
 public class ProfileFragment extends Fragment {
@@ -25,6 +28,7 @@ public class ProfileFragment extends Fragment {
     private ImageView profileImage;
     private TextView profileName, profileNickname, profileDescription;
     private Button statsButton;
+    private Button btnLogout;
 
     @Nullable
     @Override
@@ -36,6 +40,8 @@ public class ProfileFragment extends Fragment {
         profileNickname = view.findViewById(R.id.profileNickname);
         profileDescription = view.findViewById(R.id.profileDescription);
         statsButton = view.findViewById(R.id.statsButton);
+        btnLogout = view.findViewById(R.id.btnLogout);
+
 
         setupListeners();
         return view;
@@ -50,6 +56,7 @@ public class ProfileFragment extends Fragment {
             Intent intent = new Intent(getContext(), HistoryAndStatsActivity.class);
             startActivity(intent);
         });
+        btnLogout.setOnClickListener(v -> logout());
     }
 
     private void openGallery() {
@@ -85,5 +92,14 @@ public class ProfileFragment extends Fragment {
                 e.printStackTrace();
             }
         }
+    }
+    private void logout() {
+        // 1) Чистим сохранённую сессию
+        SessionManager.clear(requireContext());
+
+        // 2) Переходим в AuthActivity и очищаем history
+        Intent intent = new Intent(requireActivity(), AuthActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 }

@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.*;
 import com.example.Kalendar.R;
 import com.example.Kalendar.adapters.HomeAdapter;
 import com.example.Kalendar.adapters.HomeItem;
+import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.models.DayEntity;
 import com.example.Kalendar.models.EventEntity;
@@ -101,12 +102,18 @@ public class HomeFragment extends Fragment {
     private void loadTodayContent() {
         new Thread(() -> {
             AppDatabase db = AppDatabase.getDatabase(requireContext());
+            int userId = SessionManager.getLoggedInUserId(requireContext());
+
+            // Получаем календари пользователя
+            List<Integer> calendarIds = new ArrayList<>();
+            db.calendarDao().getAllForUser(userId).forEach(c -> calendarIds.add(c.id));
 
             long timestamp = LocalDate.now()
                     .atStartOfDay(ZoneId.systemDefault())
                     .toInstant().toEpochMilli();
 
-            List<DayEntity> todayDays = db.dayDao().getByTimestamp(timestamp);
+            // Получаем DayEntity для этих календарей
+            List<DayEntity> todayDays = db.dayDao().getByTimestampAndCalendarIds(timestamp, calendarIds);
 
             List<TaskEntity> todayTasks = new ArrayList<>();
             List<EventEntity> todayEvents = new ArrayList<>();
@@ -127,7 +134,7 @@ public class HomeFragment extends Fragment {
                     }
                 }
             }
-
+            // Повторы по другим событиям
             List<EventEntity> allEvents = db.eventDao().getAll();
             LocalDate today = LocalDate.now();
             Set<Integer> accountedIds = new HashSet<>();
@@ -136,6 +143,7 @@ public class HomeFragment extends Fragment {
             for (EventEntity e : allEvents) {
                 if (accountedIds.contains(e.id)) continue;
                 if (e.repeatRule == null || e.repeatRule.isEmpty()) continue;
+                if (!calendarIds.contains(e.calendarId)) continue; // фильтрация по пользователю
 
                 DayEntity base = db.dayDao().getById(e.dayId);
                 if (base == null) continue;
@@ -148,12 +156,12 @@ public class HomeFragment extends Fragment {
                 }
             }
 
-
             requireActivity().runOnUiThread(() -> {
                 renderHome(todayTasks, todayEvents);
             });
         }).start();
     }
+
 
     private EventEntity createVirtualCopy(EventEntity original, DayEntity day) {
         EventEntity copy = new EventEntity();

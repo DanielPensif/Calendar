@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 
 import com.example.Kalendar.R;
+import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.adapters.TaskReminderReceiver;
 import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.models.CalendarEntity;
@@ -41,6 +42,7 @@ public class AddTaskDialogFragment extends BottomSheetDialogFragment {
     private OnTaskSavedListener listener;
     private final List<CalendarEntity> calendarEntities = new ArrayList<>();
     private Integer editingTaskId = null;
+    private int currentUserId;
 
     public interface OnTaskSavedListener {
         void onTaskSaved();
@@ -75,6 +77,7 @@ public class AddTaskDialogFragment extends BottomSheetDialogFragment {
         View view = inflater.inflate(R.layout.fragment_add_task, container, false);
         date = LocalDate.parse(Objects.requireNonNull(requireArguments().getString("date")));
         db = AppDatabase.getDatabase(requireContext());
+        currentUserId = SessionManager.getLoggedInUserId(requireContext());
 
         inputTitle = view.findViewById(R.id.inputTaskTitle);
         inputComment = view.findViewById(R.id.inputTaskComment);
@@ -123,18 +126,19 @@ public class AddTaskDialogFragment extends BottomSheetDialogFragment {
         spinnerCategory.setAdapter(categoryAdapter);
 
         new Thread(() -> {
-            List<CalendarEntity> calendars = db.calendarDao().getAll();
+            List<CalendarEntity> calendars = db.calendarDao().getByUserId(currentUserId);
+
             List<String> titles = new ArrayList<>();
             for (CalendarEntity cal : calendars) titles.add(cal.title);
+
             requireActivity().runOnUiThread(() -> {
                 calendarEntities.clear();
                 calendarEntities.addAll(calendars);
-                ArrayAdapter<String> calAdapter = new ArrayAdapter<>(
-                        requireContext(),
-                        android.R.layout.simple_spinner_dropdown_item,
-                        titles
+                spinnerCalendar.setAdapter(
+                        new ArrayAdapter<>(requireContext(),
+                                android.R.layout.simple_spinner_dropdown_item,
+                                titles)
                 );
-                spinnerCalendar.setAdapter(calAdapter);
             });
         }).start();
     }

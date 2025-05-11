@@ -71,14 +71,6 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"/>
-
-    <ImageView
-        android:id="@+id/flashEffect"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:src="@drawable/ic_flash"
-        android:layout_gravity="center"
-        android:visibility="gone"/>
 </LinearLayout>
  </LinearLayout>
 

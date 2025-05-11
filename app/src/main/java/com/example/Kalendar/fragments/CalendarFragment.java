@@ -18,6 +18,7 @@ import com.example.Kalendar.CalendarManagerActivity;
 import com.example.Kalendar.DayDetailsActivity;
 import com.example.Kalendar.R;
 import com.example.Kalendar.adapters.CalendarGridAdapter;
+import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.models.CalendarEntity;
 import com.example.Kalendar.models.DayEntity;
@@ -43,11 +44,11 @@ public class CalendarFragment extends Fragment {
     private LocalDate currentDate;
     private List<LocalDate> daysInMonth = new ArrayList<>();
     Map<LocalDate, List<DayEntity>> dbDays = new HashMap<>();
-
+    private int currentUserId;
     private final List<CalendarEntity> allCalendars = new ArrayList<>();
-
     private TextView streakText;
     private Spinner calendarSelector;
+
 
     private static final String[] QUOTES = {
             "Каждый день — это шанс начать заново.",
@@ -64,7 +65,6 @@ public class CalendarFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_calendar, container, false);
-
         TextView monthTitle = view.findViewById(R.id.monthTitle);
         monthTitle.setOnClickListener(v -> showMonthYearDialog());
         ImageButton prevBtn = view.findViewById(R.id.prevMonthBtn);
@@ -203,11 +203,21 @@ public class CalendarFragment extends Fragment {
             for (CalendarEntity c : allCalendars) {
                 if (c != null) colorMap.put(c.id, c.colorHex);
             }
+            currentUserId = SessionManager.getLoggedInUserId(requireContext());
+            List<CalendarEntity> userCalendars = db.calendarDao().getAllForUser(currentUserId);
 
-            // Загружаем дни по выбранному календарю
-            List<DayEntity> days = (currentCalendarId == -1)
-                    ? db.dayDao().getAll()
-                    : db.dayDao().getByCalendarId(currentCalendarId);
+            List<Integer> calendarIds = new ArrayList<>();
+            for (CalendarEntity calendar : userCalendars) {
+                calendarIds.add(calendar.id);
+            }
+            List<DayEntity> days;
+            if (currentCalendarId == -1) {
+                // Все календари пользователя
+                days = db.dayDao().getByCalendarIds(calendarIds);
+            } else {
+                // Конкретный календарь
+                days = db.dayDao().getByCalendarId(currentCalendarId);
+            }
 
             for (DayEntity day : days) {
                 LocalDate date = Instant.ofEpochMilli(day.timestamp)
@@ -312,7 +322,11 @@ public class CalendarFragment extends Fragment {
             }
             // Загрузка наград для дней
             Map<LocalDate, String> awardsMap = new HashMap<>();
-            days = db.dayDao().getAll();
+            if (currentCalendarId == -1) {
+                days = db.dayDao().getByCalendarIds(calendarIds);
+            } else {
+                days = db.dayDao().getByCalendarId(currentCalendarId);
+            }
             for (DayEntity day : days) {
                 if (day.awardType == null) continue;
 
@@ -352,7 +366,8 @@ public class CalendarFragment extends Fragment {
         int previousId = currentCalendarId;
 
         new Thread(() -> {
-            List<CalendarEntity> calendars = db.calendarDao().getAll();
+            currentUserId = SessionManager.getLoggedInUserId(requireContext());
+            List<CalendarEntity> calendars = db.calendarDao().getAllForUser(currentUserId);
 
             List<String> titles = new ArrayList<>();
             List<CalendarEntity> loadedCalendars = new ArrayList<>();
@@ -406,7 +421,8 @@ public class CalendarFragment extends Fragment {
 
     private void updateStreak() {
         new Thread(() -> {
-            List<CalendarEntity> allCalendars = db.calendarDao().getAll();
+            currentUserId = SessionManager.getLoggedInUserId(requireContext());
+            List<CalendarEntity> allCalendars = db.calendarDao().getAllForUser(currentUserId);
             Map<Integer, Integer> calendarStreaks = new HashMap<>();
 
             // Сегодняшний день в 00:00

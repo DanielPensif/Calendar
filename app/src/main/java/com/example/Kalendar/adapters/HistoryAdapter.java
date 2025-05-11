@@ -42,6 +42,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
         holder.itemView.setOnClickListener(v -> listener.onAwardClick(position));
         if (item.award != null) {
+            holder.awardIcon.setVisibility(View.VISIBLE);
             switch (item.award) {
                 case "cup":
                     holder.awardIcon.setImageResource(R.drawable.ic_award_cup);

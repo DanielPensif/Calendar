@@ -78,37 +78,45 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
         }
 
         holder.underlineContainer.removeAllViews();
-
-        // Скрыть фон награды по умолчанию
         holder.awardBackground.setVisibility(View.GONE);
+        holder.topRightIndicator.setVisibility(View.GONE);
 
-        // Если есть награда для date
+        Set<Integer> calendars = activeDayCalendars.get(date);
         String award = awardsMap.get(date);
-        if (award != null) {
-            holder.awardBackground.setVisibility(View.VISIBLE);
-            switch (award) {
-                case "cup":
-                    holder.awardBackground.setImageResource(R.drawable.ic_award_cup);
-                    break;
-                case "medal":
-                    holder.awardBackground.setImageResource(R.drawable.ic_award_medal);
-                    break;
-                case "gold_border":
-                    holder.awardBackground.setImageResource(R.drawable.ic_award_gold_border);
-                    break;
+
+        // Если выбран конкретный календарь
+        if (currentCalendarId != -1) {
+            if (award != null) {
+                holder.awardBackground.setVisibility(View.VISIBLE);
+                switch (award) {
+                    case "cup":
+                        holder.awardBackground.setImageResource(R.drawable.ic_award_cup);
+                        break;
+                    case "medal":
+                        holder.awardBackground.setImageResource(R.drawable.ic_award_medal);
+                        break;
+                    case "gold_border":
+                        holder.awardBackground.setImageResource(R.drawable.ic_award_gold_border);
+                        break;
+                }
+            }
+        } else {
+            // Выбран "все календари"
+            if (calendars != null && award != null) {
+                holder.topRightIndicator.setVisibility(View.VISIBLE);
             }
         }
 
-
-        Set<Integer> calendars = activeDayCalendars.get(date);
         if (calendars != null) {
             int count = 0;
             for (Integer calId : calendars) {
                 String hex = calendarIdToColor.getOrDefault(calId, "#67BA80");
                 View underline = new View(holder.itemView.getContext());
 
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dpToPx(holder.itemView.getContext(), 64), dpToPx(holder.itemView.getContext(), 4));
-                if (count > 0) params.setMargins(0, 12, 0, 0); // отступ сверху
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        dpToPx(holder.itemView.getContext(), 64),
+                        dpToPx(holder.itemView.getContext(), 4));
+                if (count > 0) params.setMargins(0, 12, 0, 0);
                 underline.setLayoutParams(params);
                 underline.setBackgroundColor(Color.parseColor(hex));
 
@@ -117,17 +125,10 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
                 if (++count >= MAX_UNDERLINES) break;
             }
         }
-        // Показываем точку, если выбран "все календари" и задачи есть
-        if (currentCalendarId == -1 && activeDayCalendars.get(date) != null && award != null) {
-            holder.topRightIndicator.setVisibility(View.VISIBLE);
-            holder.awardBackground.setVisibility(View.GONE);
-        } else {
-            holder.topRightIndicator.setVisibility(View.GONE);
-        }
-
 
         holder.itemView.setOnClickListener(v -> listener.onDayClick(date));
     }
+
 
 
     @Override

@@ -4,12 +4,15 @@ import android.content.Context;
 import android.util.Pair;
 
 import com.example.Kalendar.adapters.HistoryItem;
+import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.db.AppDatabase;
+import com.example.Kalendar.models.CalendarEntity;
 import com.example.Kalendar.models.DayEntity;
 import com.example.Kalendar.models.TaskEntity;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -22,18 +25,33 @@ public class DatabaseHelper {
     }
 
     public static List<HistoryItem> getCompletedDays(Context context) {
-        List<DayEntity> days = getDatabase(context).dayDao().getAll();
-        List<HistoryItem> items = new ArrayList<>();
+        AppDatabase db = getDatabase(context);
 
+        int userId = SessionManager.getLoggedInUserId(context);
+        if (userId == -1) return Collections.emptyList();
+
+        List<CalendarEntity> cals = db.calendarDao().getByUserId(userId);
+        if (cals.isEmpty()) return Collections.emptyList();
+
+        List<Integer> calIds = new ArrayList<>(cals.size());
+        Map<Integer, String> calTitles = new HashMap<>();
+        for (CalendarEntity c : cals) {
+            calIds.add(c.id);
+            calTitles.put(c.id, c.title);
+        }
+
+        List<DayEntity> days = db.dayDao().getByCalendarIds(calIds);
+
+        List<HistoryItem> items = new ArrayList<>();
         for (DayEntity day : days) {
-            // Проверка: день должен иметь хотя бы одну выполненную задачу
-            int completedCount = getDatabase(context).taskDao().getCompletedTaskCountForDay(day.id);
-            if (completedCount > 0) {
+            int total = db.taskDao().getTotalTaskCountByDayId(day.id);
+            int done = db.taskDao().getCompletedTaskCountByDayId(day.id);
+
+            if (total > 0 && total == done) {
                 String dateFormatted = android.text.format.DateFormat
                         .format("d MMM", day.timestamp).toString();
-                String calendarName = getDatabase(context)
-                        .calendarDao().getCalendarById(day.calendarId).title;
-                items.add(new HistoryItem(dateFormatted, calendarName, day.timestamp, day.calendarId));
+                String calName = calTitles.get(day.calendarId);
+                items.add(new HistoryItem(dateFormatted, calName, day.timestamp, day.calendarId, day.awardType));
             }
         }
         return items;
@@ -41,10 +59,16 @@ public class DatabaseHelper {
 
     public static void saveAwardForDay(Context context, int dayId, String awardType) {
         AppDatabase db = getDatabase(context);
+        int userId = SessionManager.getLoggedInUserId(context);
+        if (userId == -1) return;
+
         DayEntity day = db.dayDao().getById(dayId);
         if (day != null) {
-            day.awardType = awardType;
-            db.dayDao().update(day);
+            CalendarEntity cal = db.calendarDao().getById(day.calendarId);
+            if (cal != null && cal.userId == userId) {
+                day.awardType = awardType;
+                db.dayDao().update(day);
+            }
         }
     }
 
@@ -55,12 +79,22 @@ public class DatabaseHelper {
     }
 
     public static Map<Pair<Long, Integer>, String> getAwardsForCompletedDays(Context context) {
-        List<DayEntity> days = getDatabase(context).dayDao().getAll();
+        int userId = SessionManager.getLoggedInUserId(context);
+        if (userId == -1) return Collections.emptyMap();
+
+        AppDatabase db = getDatabase(context);
+
+        List<CalendarEntity> userCalendars = db.calendarDao().getByUserId(userId);
+        List<Integer> calIds = new ArrayList<>();
+        for (CalendarEntity c : userCalendars) calIds.add(c.id);
+
+        List<DayEntity> days = db.dayDao().getByCalendarIds(calIds);
+
         Map<Pair<Long, Integer>, String> result = new HashMap<>();
         for (DayEntity day : days) {
             if (day.awardType != null) {
-                int totalTasks = getDatabase(context).taskDao().getTotalTaskCountByDayId(day.id);
-                int doneTasks = getDatabase(context).taskDao().getCompletedTaskCountByDayId(day.id);
+                int totalTasks = db.taskDao().getTotalTaskCountByDayId(day.id);
+                int doneTasks = db.taskDao().getCompletedTaskCountByDayId(day.id);
                 if (totalTasks > 0 && totalTasks == doneTasks) {
                     Pair<Long, Integer> key = new Pair<>(day.timestamp, day.calendarId);
                     result.put(key, day.awardType);
@@ -71,13 +105,20 @@ public class DatabaseHelper {
     }
 
     public static List<Integer> getTaskCountsForLastNDays(Context context, int n, boolean completedOnly) {
+        int userId = SessionManager.getLoggedInUserId(context);
+        if (userId == -1) return Collections.emptyList();
+
         Calendar calendar = Calendar.getInstance();
         long end = calendar.getTimeInMillis();
         calendar.add(Calendar.DAY_OF_YEAR, -n + 1);
         long start = calendar.getTimeInMillis();
 
-        List<DayEntity> allDays = getDatabase(context)
-                .dayDao().getDaysBetween(start, end);
+        AppDatabase db = getDatabase(context);
+        List<CalendarEntity> userCalendars = db.calendarDao().getByUserId(userId);
+        List<Integer> calIds = new ArrayList<>();
+        for (CalendarEntity c : userCalendars) calIds.add(c.id);
+
+        List<DayEntity> allDays = db.dayDao().getDaysBetweenForCalendars(start, end, calIds);
         List<Integer> counts = new ArrayList<>();
 
         for (int i = 0; i < n; i++) {
@@ -95,12 +136,20 @@ public class DatabaseHelper {
     }
 
     public static Pair<List<Integer>, List<Integer>> getCompletedAndUncompletedCounts(Context context, int n) {
+        int userId = SessionManager.getLoggedInUserId(context);
+        if (userId == -1) return new Pair<>(Collections.emptyList(), Collections.emptyList());
+
         Calendar calendar = Calendar.getInstance();
         long end = calendar.getTimeInMillis();
         calendar.add(Calendar.DAY_OF_YEAR, -n + 1);
         long start = calendar.getTimeInMillis();
 
-        List<DayEntity> allDays = getDatabase(context).dayDao().getDaysBetween(start, end);
+        AppDatabase db = getDatabase(context);
+        List<CalendarEntity> userCalendars = db.calendarDao().getByUserId(userId);
+        List<Integer> calIds = new ArrayList<>();
+        for (CalendarEntity c : userCalendars) calIds.add(c.id);
+
+        List<DayEntity> allDays = db.dayDao().getDaysBetweenForCalendars(start, end, calIds);
 
         List<Integer> completedCounts = new ArrayList<>();
         List<Integer> uncompletedCounts = new ArrayList<>();
@@ -114,8 +163,8 @@ public class DatabaseHelper {
 
             for (DayEntity day : allDays) {
                 if (day.timestamp >= dayStart && day.timestamp < dayEnd) {
-                    int total = getDatabase(context).taskDao().getTotalTaskCountByDayId(day.id);
-                    int done = getDatabase(context).taskDao().getCompletedTaskCountByDayId(day.id);
+                    int total = db.taskDao().getTotalTaskCountByDayId(day.id);
+                    int done = db.taskDao().getCompletedTaskCountByDayId(day.id);
                     completedSum += done;
                     uncompletedSum += (total - done);
                 }
@@ -129,15 +178,16 @@ public class DatabaseHelper {
     }
 
     public static List<int[]> getDetailedTaskStatsForLastNDays(Context context, int n) {
+        int userId = SessionManager.getLoggedInUserId(context);
+        if (userId == -1) return Collections.emptyList();
+
         Calendar calendar = Calendar.getInstance();
-        // Устанавливаем время конца как конец сегодняшнего дня (опционально)
         calendar.set(Calendar.HOUR_OF_DAY, 23);
         calendar.set(Calendar.MINUTE, 59);
         calendar.set(Calendar.SECOND, 59);
         calendar.set(Calendar.MILLISECOND, 999);
         long end = calendar.getTimeInMillis();
 
-        // Начало — ровно n-1 дней назад в 00:00
         calendar.add(Calendar.DAY_OF_YEAR, -n + 1);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
@@ -145,29 +195,26 @@ public class DatabaseHelper {
         calendar.set(Calendar.MILLISECOND, 0);
         long start = calendar.getTimeInMillis();
 
-        // Загружаем все дни в этом интервале
-        List<DayEntity> allDays = getDatabase(context)
-                .dayDao().getDaysBetween(start, end);
+        AppDatabase db = getDatabase(context);
+        List<CalendarEntity> userCalendars = db.calendarDao().getByUserId(userId);
+        List<Integer> calIds = new ArrayList<>();
+        for (CalendarEntity c : userCalendars) calIds.add(c.id);
 
-        List<int[]> stats = new ArrayList<>(); // для каждого дня — [allTasks, completedTasks, notCompletedTasks]
+        List<DayEntity> allDays = db.dayDao().getDaysBetweenForCalendars(start, end, calIds);
+
+        List<int[]> stats = new ArrayList<>();
 
         for (int i = 0; i < n; i++) {
-            // границы i-го дня
-            long dayStart = start + i * 86_400_000L;
-            long dayEnd = dayStart + 86_400_000L - 1;
+            long dayStart = start + i * 86400000L;
+            long dayEnd = dayStart + 86400000L - 1;
 
             int allTasks = 0;
             int completedTasks = 0;
 
-            // для каждого DayEntity, попавшего в интервал
             for (DayEntity day : allDays) {
                 if (day.timestamp >= dayStart && day.timestamp <= dayEnd) {
-                    // получаем все задачи по dayId
-                    List<TaskEntity> tasks = getDatabase(context)
-                            .taskDao().getTasksByDayId(day.id);
-
+                    List<TaskEntity> tasks = db.taskDao().getTasksByDayId(day.id);
                     allTasks += tasks.size();
-                    // считаем выполненные
                     for (TaskEntity t : tasks) {
                         if (t.done) completedTasks++;
                     }
@@ -181,17 +228,20 @@ public class DatabaseHelper {
         return stats;
     }
 
-
     public static void updateDayCompletionStatus(Context context, int dayId) {
         new Thread(() -> {
-            AppDatabase db = AppDatabase.getDatabase(context);
+            AppDatabase db = getDatabase(context);
+            int userId = SessionManager.getLoggedInUserId(context);
+            if (userId == -1) return;
+
             DayEntity day = db.dayDao().getById(dayId);
             if (day == null) return;
 
-            // Получаем все задачи для этого дня
+            CalendarEntity cal = db.calendarDao().getById(day.calendarId);
+            if (cal == null || cal.userId != userId) return;
+
             List<TaskEntity> tasks = db.taskDao().getTasksByDayId(dayId);
 
-            // Проверяем, есть ли задачи и все ли они выполнены
             boolean allDone = !tasks.isEmpty();
             for (TaskEntity t : tasks) {
                 if (!t.done) {
@@ -199,7 +249,7 @@ public class DatabaseHelper {
                     break;
                 }
             }
-            // Если день не полностью выполнен — сбросить награду
+
             if (!allDone && day.awardType != null) {
                 day.awardType = null;
                 db.dayDao().update(day);
@@ -207,5 +257,4 @@ public class DatabaseHelper {
 
         }).start();
     }
-
 }

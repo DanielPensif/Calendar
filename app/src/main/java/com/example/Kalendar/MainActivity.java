@@ -1,5 +1,6 @@
-package com.example.Kalendar;
+package com.example.Kalendar;;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
@@ -19,6 +20,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.fragments.CalendarFragment;
 import com.example.Kalendar.fragments.HomeFragment;
@@ -35,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView navHome, navCalendar, navProfile;
     private AppDatabase db;
     private static final int REQUEST_CODE_POST_NOTIFICATIONS = 1001;
+    private int userId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +48,13 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("FATAL", "UNCAUGHT ERROR", throwable)
         );
         com.jakewharton.threetenabp.AndroidThreeTen.init(this);
-
+        userId = SessionManager.getLoggedInUserId(this);
+        if (SessionManager.getLoggedInUserId(this) == -1) {
+            // не залогинен — переходим на AuthActivity
+            startActivity(new Intent(this, AuthActivity.class));
+            finish();
+            return;
+        }
         setContentView(R.layout.activity_main);
 
         // Кнопки навигации
@@ -161,14 +170,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void initTodayIfNotExists() {
         new Thread(() -> {
-            List<CalendarEntity> all = db.calendarDao().getAll();
+            List<CalendarEntity> all = db.calendarDao().getByUserId(userId);
             int calendarId;
             if (all.isEmpty()) {
                 CalendarEntity cal = new CalendarEntity(
                         "Календарь по умолчанию",
                         System.currentTimeMillis(),
-                        "#67BA80"
+                        "#67BA80",
+                        userId
                 );
+                cal.userId = userId;
                 calendarId = (int) db.calendarDao().insert(cal);
             } else {
                 calendarId = all.get(0).id;
