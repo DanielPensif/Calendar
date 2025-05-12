@@ -1,7 +1,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/background">
 
     <!-- Контейнер для фрагментов -->
     <FrameLayout
@@ -15,7 +16,7 @@
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:background="#EEEEEE"
+        android:background="@color/some_staff"
         android:orientation="horizontal"
         android:weightSum="3">
 
@@ -29,8 +30,8 @@
             android:orientation="vertical">
             <ImageView
                 android:id="@+id/nav_home_icon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:src="@drawable/ic_home" />
             <TextView
                 android:id="@+id/nav_home"
@@ -50,8 +51,8 @@
             android:orientation="vertical">
             <ImageView
                 android:id="@+id/nav_calendar_icon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:src="@drawable/ic_calendar" />
             <TextView
                 android:id="@+id/nav_calendar"
@@ -71,8 +72,8 @@
             android:orientation="vertical">
             <ImageView
                 android:id="@+id/nav_profile_icon"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:src="@drawable/ic_profile" />
             <TextView
                 android:id="@+id/nav_profile"

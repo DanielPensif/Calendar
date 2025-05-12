@@ -103,7 +103,7 @@
         android:layout_margin="16dp"
         android:src="@drawable/ic_plus"
         app:tint="@android:color/white"
-        app:backgroundTint="@color/teal_700"/>
+        app:backgroundTint="@color/motivation"/>
 
     <!-- Информация о выбранном календаре -->
     <LinearLayout

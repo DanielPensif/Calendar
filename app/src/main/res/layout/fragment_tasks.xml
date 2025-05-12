@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"/>
 
-    <!-- Список событий -->
+    <!-- Список задач -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/tasksRecycler"
         android:layout_width="match_parent"

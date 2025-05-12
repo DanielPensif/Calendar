@@ -4,5 +4,15 @@
     <color name="white">#FFFFFFFF</color>
     <color name="dark_gray">#63666A</color>
     <color name="teal_700">#0c5d56</color>
-    <color name="royalblue">#4169E1</color>
+    <color name="primary">#3F51B5</color>
+    <color name="success">#4CAF50</color>
+    <color name="motivation">#FFA000</color>
+    <color name="bad">#E53935</color>
+    <color name="background">#F9F9F9</color>
+    <color name="some_staff">#FFFFFF</color>
+    <color name="neutral">#BDBDBD</color>
+    <color name="gold">#FFD700</color>
+    <color name="main_text">#212121</color>
+    <color name="secondly_text">#757575</color>
+    <color name="success_text">#4CAF50</color>
 </resources>

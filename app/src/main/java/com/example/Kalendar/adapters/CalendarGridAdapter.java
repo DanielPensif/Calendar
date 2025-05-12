@@ -69,7 +69,7 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
             holder.dayNumber.setTypeface(null, Typeface.NORMAL);
             holder.dayNumber.setBackground(null);
         } else if (date.equals(LocalDate.now())) {
-            holder.dayNumber.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.royalblue));
+            holder.dayNumber.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.primary));
             holder.dayNumber.setTypeface(null, Typeface.BOLD);
         } else {
             holder.dayNumber.setTextColor(Color.BLACK);

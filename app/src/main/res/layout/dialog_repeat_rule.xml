@@ -18,7 +18,8 @@
             android:text="Повторять"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            android:textColor="@color/main_text"/>
 
         <Spinner
             android:id="@+id/spinnerFreq"
@@ -33,7 +34,8 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginTop="12dp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            android:textColor="@color/main_text"/>
 
         <EditText
             android:id="@+id/inputInterval"
@@ -50,7 +52,8 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginTop="16dp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            android:textColor="@color/main_text"/>
 
         <RadioGroup
             android:id="@+id/radioEndGroup"
@@ -104,7 +107,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Готово"
-            android:layout_marginTop="20dp"/>
+            android:layout_marginTop="20dp"
+            android:backgroundTint="#2196F3"/>
     </LinearLayout>
 </ScrollView>
 
