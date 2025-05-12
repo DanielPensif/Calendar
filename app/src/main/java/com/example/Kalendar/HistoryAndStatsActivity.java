@@ -1,11 +1,15 @@
 package com.example.Kalendar;
 
+import static androidx.core.content.ContentProviderCompat.requireContext;
+
 import android.annotation.SuppressLint;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.util.Pair;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
@@ -17,6 +21,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -50,7 +55,7 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
     private HistoryAdapter adapter;
     private List<HistoryItem> historyItems;
     private Spinner spinnerDaysRange;
-    private TextView textGraphTitle;
+    private TextView cdiText;
     private int selectedDays = 7;
     private List<int[]> detailedStats;
     int userId;
@@ -58,6 +63,7 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
     // однопоточный исполнитель для всех БД-задач
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,7 +71,7 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
 
         lineChart = findViewById(R.id.lineChart);
         historyRecyclerView = findViewById(R.id.historyRecyclerView);
-        textGraphTitle = findViewById(R.id.textGraphTitle);
+        cdiText = findViewById(R.id.cdiText);
 
         Toolbar toolbar = findViewById(R.id.toolbarStats);
         setSupportActionBar(toolbar);
@@ -112,7 +118,30 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
+        cdiText.setOnClickListener(v -> {
+            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
 
+            LayoutInflater layoutInflater = LayoutInflater.from(this);
+            View dialogView = layoutInflater.inflate(R.layout.dialog_completed_day_info, null);
+            builder.setView(dialogView);
+            android.app.AlertDialog dialog = builder.create();
+
+            // Убираем углы у диалога, оставляя закругления у содержимого
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            }
+
+            // Устанавливаем цвет выделенного текста
+            TextView cdiTitle = dialogView.findViewById(R.id.cdiTitle);
+            SpannableString spannable = new SpannableString("История выполненных дней✔");
+            int start = spannable.toString().indexOf("выполненных дней✔");
+            int end = start + "выполненных дней✔".length();
+            int highlightColor = ContextCompat.getColor(this, R.color.success);
+            spannable.setSpan(new ForegroundColorSpan(highlightColor), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            cdiTitle.setText(spannable);
+
+            dialog.show();
+        });
         loadGraphDataAsync();
         loadHistoryAsync();
     }

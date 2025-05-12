@@ -3,7 +3,11 @@ package com.example.Kalendar.fragments;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.*;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
@@ -18,6 +22,7 @@ import com.example.Kalendar.CalendarManagerActivity;
 import com.example.Kalendar.DayDetailsActivity;
 import com.example.Kalendar.R;
 import com.example.Kalendar.adapters.CalendarGridAdapter;
+import com.example.Kalendar.adapters.CalendarSpinnerAdapter;
 import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.models.CalendarEntity;
@@ -97,6 +102,28 @@ public class CalendarFragment extends Fragment {
             updateMonthTitle(monthTitle);
         };
 
+        streakText.setOnClickListener(v -> {
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+
+            LayoutInflater layoutInflater = LayoutInflater.from(requireContext());
+            View dialogView = layoutInflater.inflate(R.layout.dialog_streak_info, null);
+            builder.setView(dialogView);
+            AlertDialog dialog = builder.create();
+
+            dialog.getWindow().getAttributes().windowAnimations = R.anim.fire;
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+            TextView streakTitle = dialogView.findViewById(R.id.streakTitle);
+            SpannableString spannable = new SpannableString("Что такое стрик? 🔥");
+            int start = spannable.toString().indexOf("стрик");
+            int end = start + "стрик".length();
+            spannable.setSpan(new ForegroundColorSpan(Color.parseColor("#FF5722")), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            streakTitle.setText(spannable);
+
+            dialog.show();
+        });
+
         prevBtn.setOnClickListener(prevClick);
         nextBtn.setOnClickListener(nextClick);
         prevContainer.setOnClickListener(prevClick);
@@ -112,7 +139,6 @@ public class CalendarFragment extends Fragment {
         fab.setOnClickListener(this::showFabMenu);
 
         loadCalendars();
-        setupAwards();
         return view;
     }
 
@@ -198,42 +224,51 @@ public class CalendarFragment extends Fragment {
         new Thread(() -> {
             dbDays.clear();
 
-            // Цвета календарей
-            Map<Integer, String> colorMap = new HashMap<>();
-            for (CalendarEntity c : allCalendars) {
-                if (c != null) colorMap.put(c.id, c.colorHex);
-            }
+            // Получаем ID текущего пользователя
             currentUserId = SessionManager.getLoggedInUserId(requireContext());
+
+            // Загружаем только календари этого пользователя
             List<CalendarEntity> userCalendars = db.calendarDao().getAllForUser(currentUserId);
 
+            // Строим map цветов только из этих календарей
+            Map<Integer, String> colorMap = new HashMap<>();
+            for (CalendarEntity c : userCalendars) {
+                colorMap.put(c.id, c.colorHex);
+            }
+
+            // Собираем список ID календарей для запросов дней
             List<Integer> calendarIds = new ArrayList<>();
             for (CalendarEntity calendar : userCalendars) {
                 calendarIds.add(calendar.id);
             }
+
+            // Загружаем дни в зависимости от выбранного календаря
             List<DayEntity> days;
             if (currentCalendarId == -1) {
-                // Все календари пользователя
+                // Все календари текущего пользователя
                 days = db.dayDao().getByCalendarIds(calendarIds);
             } else {
-                // Конкретный календарь
+                // Только один выбранный календарь
                 days = db.dayDao().getByCalendarId(currentCalendarId);
             }
 
+            // Группируем дни по дате
             for (DayEntity day : days) {
                 LocalDate date = Instant.ofEpochMilli(day.timestamp)
                         .atZone(ZoneId.systemDefault()).toLocalDate();
                 dbDays.computeIfAbsent(date, k -> new ArrayList<>()).add(day);
             }
 
+            // Загружаем все события (для повторов)
             List<EventEntity> allEvents = db.eventDao().getAll();
 
-            // Копия dbDays
+            // Создаём безопасную копию dbDays
             Map<LocalDate, List<DayEntity>> safeDbDays = new HashMap<>();
             for (Map.Entry<LocalDate, List<DayEntity>> entry : dbDays.entrySet()) {
                 safeDbDays.put(entry.getKey(), new ArrayList<>(entry.getValue()));
             }
 
-            // Активные дни (которые нужно подсветить)
+            // Собираем активные дни и их календари
             Map<LocalDate, Set<Integer>> activeDayCalendars = new HashMap<>();
 
             for (Map.Entry<LocalDate, List<DayEntity>> entry : safeDbDays.entrySet()) {
@@ -369,16 +404,10 @@ public class CalendarFragment extends Fragment {
             currentUserId = SessionManager.getLoggedInUserId(requireContext());
             List<CalendarEntity> calendars = db.calendarDao().getAllForUser(currentUserId);
 
-            List<String> titles = new ArrayList<>();
             List<CalendarEntity> loadedCalendars = new ArrayList<>();
-
-            titles.add("Все календари");
             loadedCalendars.add(null); // индекс 0 — "все"
 
-            for (CalendarEntity c : calendars) {
-                titles.add(c.title);
-                loadedCalendars.add(c);
-            }
+            loadedCalendars.addAll(calendars);
 
             requireActivity().runOnUiThread(() -> {
                 if (!isAdded()) return;
@@ -386,8 +415,7 @@ public class CalendarFragment extends Fragment {
                 allCalendars.clear();
                 allCalendars.addAll(loadedCalendars);
 
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(),
-                        android.R.layout.simple_spinner_dropdown_item, titles);
+                CalendarSpinnerAdapter adapter = new CalendarSpinnerAdapter(requireContext(), allCalendars);
                 calendarSelector.setAdapter(adapter);
 
                 // восстановление выбранного календаря
@@ -416,8 +444,8 @@ public class CalendarFragment extends Fragment {
                 });
             });
         }).start();
-
     }
+
 
     private void updateStreak() {
         new Thread(() -> {
@@ -546,8 +574,5 @@ public class CalendarFragment extends Fragment {
             startActivity(intent);
         });
         dialog.show();
-    }
-    private void setupAwards() {
-
     }
     }

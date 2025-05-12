@@ -39,6 +39,7 @@ public class EventEntity {
     public boolean earlyReminderEnabled;
     public int earlyReminderHour;
     public int earlyReminderMinute;
+    public int userId;
 
     @Ignore
     public String date; // используется для виртуальных экземпляров повторов

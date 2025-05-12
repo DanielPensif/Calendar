@@ -280,7 +280,7 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
         String timeEnd   = allDay ? "23:59" : selectedEnd;
 
         new Thread(() -> {
-            // 1) Сохраняем событие и получаем его ID
+            // 1) Находим или создаём DayEntity
             long ts = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
             DayEntity day = db.dayDao().getByTimestampAndCalendarId(ts, calendarId);
             if (day == null) {
@@ -290,9 +290,10 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
                 day.id         = (int) db.dayDao().insert(day);
             }
 
+            boolean isEdit = getArguments()!=null && getArguments().containsKey("editEventId");
             EventEntity event;
-            boolean isEdit = getArguments() != null && getArguments().containsKey("editEventId");
             if (isEdit) {
+                // Редактируем существующее
                 int evtId = getArguments().getInt("editEventId");
                 EventEntity old = db.eventDao().getById(evtId);
                 if (old == null) return;
@@ -301,6 +302,7 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
                 event = new EventEntity();
             }
 
+            // 2) Заполняем поля
             event.title                = title;
             event.location             = location;
             event.description          = description;
@@ -313,7 +315,9 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
             event.earlyReminderEnabled = earlyRem;
             event.earlyReminderHour    = earlyHour;
             event.earlyReminderMinute  = earlyMinute;
-            event.notifyOnStart = notifyOnStart;
+            event.notifyOnStart        = notifyOnStart;
+            event.dayId                = day.id;
+            event.userId               = currentUserId;
 
             if (!editableExdates.isEmpty()) {
                 event.excludedDates = editableExdates.stream()
@@ -322,23 +326,35 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
                         .collect(Collectors.joining(","));
             }
 
-            event.dayId = day.id;
-
-            if (isEdit) {
-                db.eventDao().update(event);
-            } else {
+            // 3) Проверяем на дубликат для новых событий
+            if (!isEdit) {
+                List<EventEntity> existing = db.eventDao().getEventsForDay(day.id);
+                boolean duplicate = existing.stream().anyMatch(e ->
+                        e.timeStart.equals(event.timeStart) &&
+                                Objects.equals(e.repeatRule, event.repeatRule)
+                );
+                if (duplicate) {
+                    // Можно показать тост или просто закрыть
+                    requireActivity().runOnUiThread(() ->
+                            Toast.makeText(getContext(), "Такое событие уже существует", Toast.LENGTH_SHORT).show()
+                    );
+                    requireActivity().runOnUiThread(this::dismiss);
+                    return;
+                }
+                // Вставляем
                 event.id = (int) db.eventDao().insert(event);
+            } else {
+                db.eventDao().update(event);
             }
 
-            // 2) Обновляем UI: закрываем диалог и вызываем колбэк
+            // 4) Закрываем диалог и обновляем экран
             requireActivity().runOnUiThread(() -> {
                 if (listener != null) listener.onEventSaved();
                 dismiss();
             });
 
-            // 3) Планируем уведомления (уничтожаем все исключения)
+            // 5) Планируем уведомления
             try {
-                // момент старта события в миллисекундах
                 String[] parts = timeStart.split(":");
                 LocalDateTime ldt = date.atTime(
                         Integer.parseInt(parts[0]),
@@ -346,28 +362,28 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
                 );
                 long eventStartMs = ldt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-                // 3.1. Раннее напоминание
+                // Раннее напоминание
                 if (earlyRem) {
                     scheduleEventNotification(
                             requireContext(),
-                            /* уникальный код */ event.id,
-                            "Напоминание о событии! '" + title + "'",
+                            event.id,
+                            "Напоминание: " + title,
                             description,
                             earlyHour, earlyMinute,
                             eventStartMs,
-                            /* isEarly= */ true
+                            true
                     );
                 }
-                // 3.2. Напоминание в момент старта
+                // Напоминание в момент старта
                 if (notifyOnStart) {
                     scheduleEventNotification(
                             requireContext(),
-                            /* отличный код */ event.id + 1000,
-                            "Самое время события! '" + title + "'",
+                            event.id + 1000,
+                            "Время события: " + title,
                             description,
-                            /* время игнорируем */ 0, 0,
+                            0, 0,
                             eventStartMs,
-                            /* isEarly= */ false
+                            false
                     );
                 }
             } catch (Exception e) {

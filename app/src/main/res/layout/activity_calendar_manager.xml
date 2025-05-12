@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="Список календарей"
-            android:textSize="18sp"
+            android:textSize="21sp"
             android:textStyle="bold"
             android:textColor="@color/main_text"/>
 

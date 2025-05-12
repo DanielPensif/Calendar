@@ -98,7 +98,8 @@
             android:layout_height="wrap_content"
             android:text="Выбрать дату"
             android:visibility="gone"
-            android:layout_marginTop="8dp"/>
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@color/primary"/>
 
         <!-- Кнопка подтверждения -->
         <Button

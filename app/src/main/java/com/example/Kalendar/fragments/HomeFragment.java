@@ -117,7 +117,9 @@ public class HomeFragment extends Fragment {
 
             List<TaskEntity> todayTasks = new ArrayList<>();
             List<EventEntity> todayEvents = new ArrayList<>();
+            Set<Integer> accountedIds = new HashSet<>();
 
+            // Обрабатываем события, привязанные к дню создания
             for (DayEntity day : todayDays) {
                 todayTasks.addAll(db.taskDao().getTasksForDay(day.id));
 
@@ -125,25 +127,28 @@ public class HomeFragment extends Fragment {
                     LocalDate start = Instant.ofEpochMilli(day.timestamp)
                             .atZone(ZoneId.systemDefault()).toLocalDate();
 
-                    if (e.repeatRule != null && !e.repeatRule.isEmpty()) {
-                        if (EventUtils.occursOnDate(e, LocalDate.now(), start)) {
-                            todayEvents.add(createVirtualCopy(e, day));
-                        }
-                    } else {
-                        todayEvents.add(e);
+                    boolean occursToday = (e.repeatRule == null || e.repeatRule.isEmpty())
+                            ? true
+                            : EventUtils.occursOnDate(e, LocalDate.now(), start);
+
+                    if (occursToday) {
+                        // Добавляем виртуальную копию (или оригинал для нерепитящихся)
+                        EventEntity copy = createVirtualCopy(e, day);
+                        copy.id = e.id;
+                        todayEvents.add(copy);
+                        accountedIds.add(e.id);
                     }
                 }
             }
-            // Повторы по другим событиям
+
+            // Обрабатываем повторяющиеся события, созданные в другие дни
             List<EventEntity> allEvents = db.eventDao().getAll();
             LocalDate today = LocalDate.now();
-            Set<Integer> accountedIds = new HashSet<>();
-            for (EventEntity e : todayEvents) accountedIds.add(e.id);
 
             for (EventEntity e : allEvents) {
                 if (accountedIds.contains(e.id)) continue;
                 if (e.repeatRule == null || e.repeatRule.isEmpty()) continue;
-                if (!calendarIds.contains(e.calendarId)) continue; // фильтрация по пользователю
+                if (!calendarIds.contains(e.calendarId)) continue;
 
                 DayEntity base = db.dayDao().getById(e.dayId);
                 if (base == null) continue;
@@ -152,7 +157,9 @@ public class HomeFragment extends Fragment {
                         .atZone(ZoneId.systemDefault()).toLocalDate();
 
                 if (EventUtils.occursOnDate(e, today, start)) {
-                    todayEvents.add(createVirtualCopy(e, base));
+                    EventEntity copy = createVirtualCopy(e, base);
+                    copy.id = e.id;                // сохраняем оригинальный id
+                    todayEvents.add(copy);
                 }
             }
 
@@ -163,29 +170,30 @@ public class HomeFragment extends Fragment {
     }
 
 
+
     private EventEntity createVirtualCopy(EventEntity original, DayEntity day) {
         EventEntity copy = new EventEntity();
+        copy.id = original.id;
 
-        copy.id = 0; // ID = 0 означает, что это виртуальное, не сохранённое в БД
-        copy.title = original.title;
-        copy.timeStart = original.timeStart;
-        copy.timeEnd = original.timeEnd;
-        copy.allDay = original.allDay;
-        copy.category = original.category;
-        copy.description = original.description;
-        copy.location = original.location;
-        copy.repeatRule = original.repeatRule;
-        copy.calendarId = original.calendarId;
-        copy.dayId = day.id;
+        copy.title        = original.title;
+        copy.timeStart    = original.timeStart;
+        copy.timeEnd      = original.timeEnd;
+        copy.allDay       = original.allDay;
+        copy.category     = original.category;
+        copy.description  = original.description;
+        copy.location     = original.location;
+        copy.repeatRule   = original.repeatRule;
+        copy.calendarId   = original.calendarId;
+        copy.dayId        = day.id;
         copy.excludedDates = original.excludedDates;
 
-        // Устанавливаем дату (для сравнения и вывода)
         LocalDate localDate = Instant.ofEpochMilli(day.timestamp)
                 .atZone(ZoneId.systemDefault()).toLocalDate();
         copy.date = localDate.toString();
 
         return copy;
     }
+
 
 
     @Override
