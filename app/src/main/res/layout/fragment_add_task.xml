@@ -76,7 +76,7 @@
         android:textStyle="bold"
         android:textColor="@android:color/white"
         app:cornerRadius="16dp"
-        app:backgroundTint="@color/teal_700"
+        app:backgroundTint="@color/motivation"
         android:layout_marginTop="16dp"/>
 
 </LinearLayout>

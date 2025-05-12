@@ -4,27 +4,27 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="@color/background">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white">
+        android:background="@color/background">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/white"
+            android:background="@color/background"
             app:navigationIcon="?attr/homeAsUpIndicator" />
         <!-- Вкладки -->
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:tabIndicatorColor="@color/black"
-            app:tabSelectedTextColor="@color/black"
+            app:tabIndicatorColor="@color/main_text"
+            app:tabSelectedTextColor="@color/main_text"
             app:tabTextColor="@color/dark_gray" />
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -38,7 +38,7 @@
         android:text="21 апреля 2025"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="@color/black"
+        android:textColor="@color/main_text"
         app:layout_anchor="@+id/appBarLayout2"
         app:layout_anchorGravity="top|center" />
     <androidx.viewpager2.widget.ViewPager2
@@ -55,6 +55,6 @@
         android:layout_margin="16dp"
         android:src="@drawable/ic_plus"
         app:tint="@android:color/white"
-        app:backgroundTint="@color/teal_700"/>
+        app:backgroundTint="@color/motivation"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

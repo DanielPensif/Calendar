@@ -20,7 +20,7 @@
             android:textStyle="bold"
             android:textSize="20sp"
             android:layout_marginBottom="16dp"
-            android:textColor="@android:color/black" />
+            android:textColor="@color/main_text" />
 
         <TextView
             android:layout_width="match_parent"
@@ -29,7 +29,7 @@
             android:textStyle="bold"
             android:textSize="16sp"
             android:layout_marginBottom="8dp"
-            android:textColor="@color/dark_gray"/>
+            android:textColor="@color/secondly_text"/>
 
         <RatingBar
             android:id="@+id/ratingBar"
@@ -48,7 +48,7 @@
             android:textSize="16sp"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp"
-            android:textColor="@android:color/black"/>
+            android:textColor="@color/main_text"/>
 
         <RadioGroup
             android:id="@+id/onTimeGroup"
@@ -96,7 +96,7 @@
             android:text="Комментарий к выполнению"
             android:layout_marginTop="16dp"
             android:textStyle="bold"
-            android:textColor="@color/dark_gray"/>
+            android:textColor="@color/main_text"/>
 
         <EditText
             android:id="@+id/commentInput"
@@ -106,7 +106,7 @@
             android:minLines="3"
             android:gravity="top|start"
             android:background="@android:drawable/editbox_background"
-            android:textColor="@color/black"/>
+            android:textColor="@color/neutral"/>
 
         <TextView
             android:layout_width="match_parent"
@@ -128,7 +128,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                app:backgroundTint="@color/teal_700"
+                app:backgroundTint="#2196F3"
                 android:text="Выбрать дату"
                 android:textColor="@color/white"/>
 

@@ -6,5 +6,5 @@
     android:text="Выполненные задачи"
     android:textSize="14sp"
     android:textStyle="bold"
-    android:textColor="#666666"
+    android:textColor="@color/main_text"
     android:background="@color/white"/>

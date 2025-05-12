@@ -3,7 +3,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="@color/background"
     android:padding="16dp">
 
     <!-- Текущая дата и время -->
@@ -39,7 +39,7 @@
             android:text="Ты можешь больше, чем думаешь."
             android:textColor="#333333"
             android:textSize="16sp"
-            android:background="#FFF2CC"
+            android:background="#ffb53d"
             android:padding="12dp"
             android:gravity="center"
             android:visibility="visible"/>

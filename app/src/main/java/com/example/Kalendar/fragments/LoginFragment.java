@@ -2,6 +2,7 @@ package com.example.Kalendar.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +21,8 @@ import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.models.UserEntity;
 import com.example.Kalendar.utils.PasswordUtils;
 import com.example.Kalendar.adapters.SessionManager;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,6 +37,7 @@ public class LoginFragment extends Fragment {
     private EditText etUsername, etPassword;
     private Button btnLogin;
     private TextView tvGoRegister;
+    private TextInputLayout passwordInputLayout;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -56,19 +60,22 @@ public class LoginFragment extends Fragment {
         etPassword   = v.findViewById(R.id.etPassword);
         btnLogin     = v.findViewById(R.id.btnLogin);
         tvGoRegister = v.findViewById(R.id.tvGoRegister);
-
+        passwordInputLayout = v.findViewById(R.id.passwordInputLayout);
         btnLogin.setOnClickListener(view -> doLogin());
         tvGoRegister.setOnClickListener(view -> {
-            // Переходим на фрагмент регистрации
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
+                    .setCustomAnimations(
+                            R.anim.slide_in_right,  // новый фрагмент входит справа
+                            R.anim.slide_out_left   // текущий уходит влево
+                    )
                     .replace(R.id.auth_container, new RegisterFragment())
                     .commit();
         });
+        passwordInputLayout.setEndIconOnClickListener(setVisibility());
 
         return v;
     }
-
     private void doLogin() {
         String username = etUsername.getText().toString().trim();
         String password = etPassword.getText().toString();
@@ -99,5 +106,23 @@ public class LoginFragment extends Fragment {
                 );
             }
         });
+    }
+    private View.OnClickListener setVisibility() {
+        return view -> {
+            TextInputEditText editText = (TextInputEditText) passwordInputLayout.getEditText();
+            if (editText != null) {
+                int selection = editText.getSelectionEnd();
+                if (editText.getInputType() == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD)) {
+                    // Показать пароль
+                    editText.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                    passwordInputLayout.setEndIconDrawable(R.drawable.ic_visibility_off);
+                } else {
+                    // Скрыть пароль
+                    editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                    passwordInputLayout.setEndIconDrawable(R.drawable.ic_visibility);
+                }
+                editText.setSelection(selection);
+            }
+        };
     }
 }
