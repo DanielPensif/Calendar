@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.TypeConverters;
 
 import com.example.Kalendar.dao.CalendarDao;
 import com.example.Kalendar.dao.DayDao;
@@ -18,6 +19,7 @@ import com.example.Kalendar.models.TaskEntity;
 import com.example.Kalendar.models.UserEntity;
 
 @Database(entities = {DayEntity.class, TaskEntity.class, EventEntity.class, CalendarEntity.class, UserEntity.class}, version = 1)
+@TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase INSTANCE;
 

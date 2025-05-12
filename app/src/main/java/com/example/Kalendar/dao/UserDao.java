@@ -3,6 +3,7 @@ package com.example.Kalendar.dao;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import com.example.Kalendar.models.UserEntity;
 
@@ -16,4 +17,7 @@ public interface UserDao {
 
     @Query("SELECT * FROM users WHERE id = :id")
     UserEntity getById(int id);
+
+    @Update
+    void update(UserEntity user);
 }

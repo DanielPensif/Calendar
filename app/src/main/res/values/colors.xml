@@ -15,4 +15,14 @@
     <color name="main_text">#212121</color>
     <color name="secondly_text">#757575</color>
     <color name="success_text">#4CAF50</color>
+    <array name="rainbow_colors">
+        <item>#FF0000</item>  <!-- Красный -->
+        <item>#FF7F00</item>  <!-- Оранжевый -->
+        <item>#FFFF00</item>  <!-- Жёлтый -->
+        <item>#00FF00</item>  <!-- Зелёный -->
+        <item>#0000FF</item>  <!-- Синий -->
+        <item>#4B0082</item>  <!-- Индиго -->
+        <item>#8B00FF</item>  <!-- Фиолетовый -->
+        <item>#FF0000</item>  <!-- Снова красный для замыкания круга -->
+    </array>
 </resources>

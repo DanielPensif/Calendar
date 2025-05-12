@@ -144,7 +144,7 @@
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="#FF5722"
-            android:padding="8dp"/>
+            android:padding="8dp" />
     </LinearLayout>
 
 </LinearLayout>
