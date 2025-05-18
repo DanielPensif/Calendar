@@ -142,7 +142,7 @@ public class HomeFragment extends Fragment {
             }
 
             // Обрабатываем повторяющиеся события, созданные в другие дни
-            List<EventEntity> allEvents = db.eventDao().getAll();
+            List<EventEntity> allEvents = db.eventDao().getByCalendarIds(calendarIds);
             LocalDate today = LocalDate.now();
 
             for (EventEntity e : allEvents) {

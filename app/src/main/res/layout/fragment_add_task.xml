@@ -24,11 +24,27 @@
                 android:layout_height="wrap_content"
                 android:hint="Название задачи"/>
 
-            <Spinner
-                android:id="@+id/spinnerTaskCategory"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"/>
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <Spinner
+                    android:id="@+id/spinnerTaskCategory"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"/>
+
+                <ImageButton
+                    android:gravity="center"
+                    android:id="@+id/btnAddCategory"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_plus"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Добавить категорию"/>
+            </LinearLayout>
 
             <Spinner
                 android:id="@+id/spinnerTaskCalendar"
