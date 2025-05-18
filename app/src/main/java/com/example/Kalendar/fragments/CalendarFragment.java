@@ -260,7 +260,7 @@ public class CalendarFragment extends Fragment {
             }
 
             // Загружаем все события (для повторов)
-            List<EventEntity> allEvents = db.eventDao().getAll();
+            List<EventEntity> allEvents = db.eventDao().getByCalendarIds(calendarIds);
 
             // Создаём безопасную копию dbDays
             Map<LocalDate, List<DayEntity>> safeDbDays = new HashMap<>();

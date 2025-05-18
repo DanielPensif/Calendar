@@ -41,6 +41,10 @@ public interface EventDao {
     @Query("SELECT * FROM events WHERE dayId = :dayId")
     List<EventEntity> getByDayId(int dayId);
 
+    @Query("SELECT * FROM events WHERE calendarId IN(:calendarIds)")
+    List<EventEntity> getByCalendarIds(List<Integer> calendarIds);
 
+    @Query("SELECT * FROM events WHERE calendarId = :calendarId")
+    List<EventEntity> getByCalendarId(int calendarId);
 }
 

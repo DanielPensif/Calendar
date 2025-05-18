@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                         Manifest.permission.POST_NOTIFICATIONS)) {
                     new AlertDialog.Builder(this)
                             .setTitle("Разрешить уведомления?")
-                            .setMessage("Чтобы приложение могло напоминать вам о задачах и событиях, нужно разрешение на отправку уведомлений.")
+                            .setMessage("Чтобы приложение могло напоминать Вам о задачах и событиях, нужно разрешение на отправку уведомлений.")
                             .setPositiveButton("Разрешить", (d, w) -> {
                                 ActivityCompat.requestPermissions(MainActivity.this,
                                         new String[]{Manifest.permission.POST_NOTIFICATIONS},
