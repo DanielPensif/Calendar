@@ -265,9 +265,7 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
             Map<Pair<Long, Integer>, String> awardsMap = DatabaseHelper.getAwardsForCompletedDays(this);
             for (HistoryItem item : items) {
                 Pair<Long, Integer> key = new Pair<>(item.timestamp, item.calendarId);
-                if (awardsMap.containsKey(key)) {
-                    item.award = awardsMap.get(key);
-                }
+                item.award = awardsMap.get(key);
             }
             runOnUiThread(() -> {
                 historyItems = items;

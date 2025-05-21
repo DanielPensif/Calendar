@@ -57,6 +57,8 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
                     holder.awardIcon.setVisibility(View.GONE);
                     break;
             }
+        } else{
+            holder.awardIcon.setImageResource(R.drawable.bg_item_award);
         }
 
     }
