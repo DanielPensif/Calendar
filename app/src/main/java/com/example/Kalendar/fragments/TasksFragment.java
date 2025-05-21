@@ -94,8 +94,6 @@ public class TasksFragment extends Fragment {
             @Override public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        // category spinner for save dialogs can be elsewhere
-
         new Thread(() -> {
             List<CalendarEntity> myCals = db.calendarDao().getByUserId(currentUserId);
             myCalendarIds = myCals.stream().map(c -> c.id).collect(Collectors.toList());
