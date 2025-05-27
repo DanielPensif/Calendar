@@ -30,6 +30,10 @@
             android:name=".DayDetailsActivity"
             android:exported="false" />
         <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".AuthActivity"
             android:exported="true">
             <intent-filter>

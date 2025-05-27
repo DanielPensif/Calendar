@@ -7,70 +7,78 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp"
-        android:background="@color/background">
+        android:background="@color/background"
+        android:padding="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal">
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/settingsButton"
+                android:layout_width="64dp"
+                android:layout_height="54dp"
+                android:layout_gravity="left"
+                android:src="@drawable/baseline_settings_24"/>
 
             <ImageView
                 android:id="@+id/profileImage"
                 android:layout_width="120dp"
                 android:layout_height="120dp"
                 android:layout_marginBottom="16dp"
-                android:scaleType="centerCrop"
-                android:src="@drawable/ic_camera_profile"
                 android:background="@drawable/circle_bg"
                 android:clipToOutline="true"
-                android:outlineProvider="background" />
+                android:outlineProvider="background"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_camera_profile" />
 
             <!-- остальной контент без изменений -->
             <TextView
                 android:id="@+id/profileName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Имя пользователя"
-                android:textSize="20sp"
-                android:textStyle="bold"
                 android:layout_marginBottom="8dp"
-                android:textColor="@color/main_text"/>
+                android:text="Имя пользователя"
+                android:textColor="@color/main_text"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/profileNickname"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" @nickname"
-                android:textSize="16sp"
                 android:layout_marginBottom="8dp"
-                android:textColor="@color/secondly_text"/>
+                android:text=" @nickname"
+                android:textColor="@color/secondly_text"
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/profileDescription"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Описание профиля"
-                android:textSize="14sp"
-                android:textColor="@color/black" />
+                android:textColor="@color/black"
+                android:textSize="14sp" />
 
             <Button
                 android:id="@+id/statsButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="История и статистика"
-                android:backgroundTint="@color/motivation"/>
+                android:backgroundTint="@color/motivation"
+                android:text="История и статистика" />
+
         </LinearLayout>
     </ScrollView>
 
     <ImageView
         android:id="@+id/btnLogout"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:layout_width="48dp"
+        android:layout_height="52dp"
         android:layout_gravity="top|end"
         android:layout_margin="16dp"
-        android:src="@drawable/ic_logout"
-        android:contentDescription="Выйти из аккаунта" />
+        android:contentDescription="Выйти из аккаунта"
+        android:src="@drawable/ic_logout" />
 </FrameLayout>

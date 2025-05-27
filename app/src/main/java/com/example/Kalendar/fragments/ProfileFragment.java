@@ -1,5 +1,6 @@
 package com.example.Kalendar.fragments;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
@@ -22,6 +23,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.Kalendar.AuthActivity;
 import com.example.Kalendar.HistoryAndStatsActivity;
 import com.example.Kalendar.R;
+import com.example.Kalendar.SettingsActivity;
 import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.models.UserEntity;
@@ -41,9 +43,10 @@ public class ProfileFragment extends Fragment {
     private TextView profileDescription;
     private TextView statsButton;
     private ImageView btnLogout;
-
+    private ImageView settingsButton;
     private UserEntity currentUser;
 
+    @SuppressLint("MissingInflatedId")
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -55,6 +58,7 @@ public class ProfileFragment extends Fragment {
         profileDescription = view.findViewById(R.id.profileDescription);
         statsButton        = view.findViewById(R.id.statsButton);
         btnLogout          = view.findViewById(R.id.btnLogout);
+        settingsButton     = view.findViewById(R.id.settingsButton);
 
         setupListeners();
         loadUserData();
@@ -66,6 +70,13 @@ public class ProfileFragment extends Fragment {
         profileName.setOnClickListener(v -> editField(profileName));
         profileDescription.setOnClickListener(v -> editField(profileDescription));
         statsButton.setOnClickListener(v -> startActivity(new Intent(getContext(), HistoryAndStatsActivity.class)));
+
+        // Добавленный код для перехода в настройки
+        settingsButton.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), SettingsActivity.class);
+            startActivity(intent);
+        });
+
         btnLogout.setOnClickListener(v -> new AlertDialog.Builder(requireContext())
                 .setTitle("Выход из аккаунта")
                 .setMessage("Вы уверены, что хотите выйти из аккаунта?")
@@ -73,6 +84,7 @@ public class ProfileFragment extends Fragment {
                 .setNegativeButton("Отмена", null)
                 .show());
     }
+
 
     private void loadUserData() {
         new Thread(() -> {
