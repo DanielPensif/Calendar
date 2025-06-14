@@ -1,8 +1,10 @@
 package com.example.Kalendar.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Update;
 
@@ -12,19 +14,31 @@ import java.util.List;
 
 @Dao
 public interface EventDao {
-    @Insert
-    long insert(EventEntity task);
+
+    // Получить все события для конкретного дня (по dayId)
+    @Query("SELECT * FROM events WHERE dayId = :dayId")
+    LiveData<List<EventEntity>> getEventsForDayLiveData(int dayId);
+
+    // Получить все события для конкретного календаря (например, для построения списка)
+    @Query("SELECT * FROM events WHERE calendarId = :calendarId")
+    LiveData<List<EventEntity>> getEventsForCalendarLiveData(int calendarId);
+
+    // Получить конкретное событие по его id
+    @Query("SELECT * FROM events WHERE id = :eventId LIMIT 1")
+    LiveData<EventEntity> getEventByIdLiveData(int eventId);
+
+    // Синхронные варианты (если репозиторию/UseCase нужно получить объект без наблюдения)
+    @Query("SELECT * FROM events WHERE id = :eventId LIMIT 1")
+    EventEntity getEventById(int eventId);
+
     @Query("SELECT * FROM events WHERE dayId = :dayId")
     List<EventEntity> getEventsForDay(int dayId);
 
+    @Query("SELECT * FROM events WHERE calendarId = :calendarId")
+    List<EventEntity> getEventsForCalendar(int calendarId);
+
     @Query("SELECT * FROM events WHERE id = :id LIMIT 1")
     EventEntity getById(int id);
-
-    @Update
-    void update(EventEntity event);
-
-    @Delete
-    void delete(EventEntity event);
 
     @Query("DELETE FROM events WHERE repeatRule = :rule")
     void deleteAllByRepeatRule(String rule);
@@ -43,8 +57,20 @@ public interface EventDao {
 
     @Query("SELECT * FROM events WHERE calendarId IN(:calendarIds)")
     List<EventEntity> getByCalendarIds(List<Integer> calendarIds);
+    @Query("SELECT * FROM events WHERE dayId BETWEEN :start AND :end")
+    LiveData<List<EventEntity>> getEventsBetweenLiveData(int start, int end);
 
-    @Query("SELECT * FROM events WHERE calendarId = :calendarId")
-    List<EventEntity> getByCalendarId(int calendarId);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insert(EventEntity event);
+
+    @Update
+    void update(EventEntity event);
+
+    @Delete
+    void delete(EventEntity event);
+
+    // Пример сортировки по времени начала (если нужно)
+    @Query("SELECT * FROM events WHERE dayId = :dayId ORDER BY timeStart ASC")
+    LiveData<List<EventEntity>> getEventsForDaySortedLiveData(int dayId);
 }
-

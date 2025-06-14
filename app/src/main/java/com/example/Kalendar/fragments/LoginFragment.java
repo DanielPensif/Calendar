@@ -3,126 +3,68 @@ package com.example.Kalendar.fragments;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.InputType;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-
+import androidx.lifecycle.ViewModelProvider;
 import com.example.Kalendar.R;
-import com.example.Kalendar.db.AppDatabase;
-import com.example.Kalendar.models.UserEntity;
-import com.example.Kalendar.utils.PasswordUtils;
-import com.example.Kalendar.adapters.SessionManager;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import com.example.Kalendar.viewmodel.AuthViewModel;
 
 public class LoginFragment extends Fragment {
-
-    public interface OnAuthSuccessListener {
-        void onLoginSuccess();
-    }
-
+    public interface OnAuthSuccessListener { void onLoginSuccess(); }
     private OnAuthSuccessListener listener;
-    private EditText etUsername, etPassword;
-    private Button btnLogin;
-    private TextView tvGoRegister;
-    private TextInputLayout passwordInputLayout;
+    private AuthViewModel viewModel;
+    private TextInputLayout usernameLayout, passwordLayout;
 
-    @Override
-    public void onAttach(@NonNull Context context) {
+    @Override public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        if (context instanceof OnAuthSuccessListener) {
-            listener = (OnAuthSuccessListener) context;
-        } else {
-            throw new IllegalStateException("Activity must implement OnAuthSuccessListener");
-        }
+        if (context instanceof OnAuthSuccessListener) listener = (OnAuthSuccessListener) context;
+        else throw new IllegalStateException("Activity must implement OnAuthSuccessListener");
     }
 
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_login, container, false);
-
-        etUsername   = v.findViewById(R.id.etUsername);
-        etPassword   = v.findViewById(R.id.etPassword);
-        btnLogin     = v.findViewById(R.id.btnLogin);
-        tvGoRegister = v.findViewById(R.id.tvGoRegister);
-        passwordInputLayout = v.findViewById(R.id.passwordInputLayout);
-        btnLogin.setOnClickListener(view -> doLogin());
-        tvGoRegister.setOnClickListener(view -> {
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .setCustomAnimations(
-                            R.anim.slide_in_right,  // новый фрагмент входит справа
-                            R.anim.slide_out_left   // текущий уходит влево
-                    )
-                    .replace(R.id.auth_container, new RegisterFragment())
-                    .commit();
-        });
-        passwordInputLayout.setEndIconOnClickListener(setVisibility());
-
+    @Nullable @Override public View onCreateView(@NonNull LayoutInflater inf, @Nullable ViewGroup c, @Nullable Bundle b) {
+        View v = inf.inflate(R.layout.fragment_login, c, false);
+        usernameLayout = v.findViewById(R.id.usernameLayout);
+        passwordLayout = v.findViewById(R.id.passwordInputLayout);
+        v.findViewById(R.id.btnLogin).setOnClickListener(xx -> doLogin());
+        v.findViewById(R.id.tvGoRegister).setOnClickListener(xx ->
+                requireActivity().getSupportFragmentManager().beginTransaction()
+                        .setCustomAnimations(R.anim.slide_in_right,R.anim.slide_out_left)
+                        .replace(R.id.auth_container, new RegisterFragment()).commit()
+        );
+        passwordLayout.setEndIconOnClickListener(vv -> toggleVisibility());
         return v;
     }
-    private void doLogin() {
-        String username = etUsername.getText().toString().trim();
-        String password = etPassword.getText().toString();
 
-        if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
-            Toast.makeText(requireContext(),
-                    "Введите логин и пароль", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Работа с БД в фоновом потоке
-        ExecutorService ex = Executors.newSingleThreadExecutor();
-        ex.execute(() -> {
-            AppDatabase db = AppDatabase.getDatabase(requireContext());
-            UserEntity user = db.userDao().getByUsername(username);
-            if (user != null && user.passwordHash.equals(PasswordUtils.hash(password))) {
-                // Сохраняем сессию
-                SessionManager.saveUser(requireContext(), user.id);
-                requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(requireContext(),
-                            "Успешный вход", Toast.LENGTH_SHORT).show();
-                    listener.onLoginSuccess();
-                });
-            } else {
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(),
-                                "Неверный логин или пароль", Toast.LENGTH_SHORT).show()
-                );
-            }
-        });
+    @Override public void onViewCreated(@NonNull View v, @Nullable Bundle b) {
+        super.onViewCreated(v,b);
+        viewModel = new ViewModelProvider(requireActivity()).get(AuthViewModel.class);
+        viewModel.loginResult.observe(getViewLifecycleOwner(), user -> { if (user != null) listener.onLoginSuccess(); });
+        viewModel.error.observe(getViewLifecycleOwner(), msg -> Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show());
     }
-    private View.OnClickListener setVisibility() {
-        return view -> {
-            TextInputEditText editText = (TextInputEditText) passwordInputLayout.getEditText();
-            if (editText != null) {
-                int selection = editText.getSelectionEnd();
-                if (editText.getInputType() == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD)) {
-                    // Показать пароль
-                    editText.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-                    passwordInputLayout.setEndIconDrawable(R.drawable.ic_visibility_off);
-                } else {
-                    // Скрыть пароль
-                    editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                    passwordInputLayout.setEndIconDrawable(R.drawable.ic_visibility);
-                }
-                editText.setSelection(selection);
-            }
-        };
+
+    private void doLogin() {
+        String u = usernameLayout.getEditText().getText().toString().trim();
+        String p = passwordLayout.getEditText().getText().toString();
+        viewModel.login(u,p);
+    }
+
+    private void toggleVisibility() {
+        TextInputEditText et = (TextInputEditText) passwordLayout.getEditText();
+        if (et.getInputType()==(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD)) {
+            et.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+            passwordLayout.setEndIconDrawable(R.drawable.ic_visibility_off);
+        } else {
+            et.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            passwordLayout.setEndIconDrawable(R.drawable.ic_visibility);
+        }
+        et.setSelection(et.getText().length());
     }
 }
