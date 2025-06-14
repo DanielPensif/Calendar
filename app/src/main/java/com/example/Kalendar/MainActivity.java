@@ -1,4 +1,4 @@
-package com.example.Kalendar;;
+package com.example.Kalendar;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -19,23 +19,19 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.Kalendar.adapters.SessionManager;
-import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.fragments.CalendarFragment;
 import com.example.Kalendar.fragments.HomeFragment;
 import com.example.Kalendar.fragments.ProfileFragment;
-import com.example.Kalendar.models.CalendarEntity;
-import com.example.Kalendar.models.DayEntity;
-
-import java.util.Calendar;
-import java.util.List;
+import com.example.Kalendar.viewmodel.MainViewModel;
 
 public class MainActivity extends AppCompatActivity {
 
     private ImageView navHomeIcon, navCalendarIcon, navProfileIcon;
     private TextView navHome, navCalendar, navProfile;
-    private AppDatabase db;
+    private MainViewModel viewModel;
     private static final int REQUEST_CODE_POST_NOTIFICATIONS = 1001;
     private int userId;
 
@@ -44,20 +40,27 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
 
+        // Global crash handler
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) ->
                 Log.e("FATAL", "UNCAUGHT ERROR", throwable)
         );
         com.jakewharton.threetenabp.AndroidThreeTen.init(this);
+
+        // Проверяем сессию
         userId = SessionManager.getLoggedInUserId(this);
-        if (SessionManager.getLoggedInUserId(this) == -1) {
-            // не залогинен — переходим на AuthActivity
+        if (userId == -1) {
             startActivity(new Intent(this, AuthActivity.class));
             finish();
             return;
         }
+
         setContentView(R.layout.activity_main);
 
-        // Кнопки навигации
+        // ViewModel
+        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
+        viewModel.initToday(userId);  // initTodayIfNotExists → UseCase
+
+        // Навигационные кнопки
         LinearLayout navHomeContainer     = findViewById(R.id.nav_home_container);
         LinearLayout navCalendarContainer = findViewById(R.id.nav_calendar_container);
         LinearLayout navProfileContainer  = findViewById(R.id.nav_profile_container);
@@ -69,10 +72,6 @@ public class MainActivity extends AppCompatActivity {
         navHomeIcon     = findViewById(R.id.nav_home_icon);
         navCalendarIcon = findViewById(R.id.nav_calendar_icon);
         navProfileIcon  = findViewById(R.id.nav_profile_icon);
-
-        // Room
-        db = AppDatabase.getDatabase(this);
-        initTodayIfNotExists();
 
         // Стартовый фрагмент
         selectTab("home");
@@ -90,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
             selectTab("profile");
             loadFragment(new ProfileFragment());
         });
+
         requestNotificationPermissionIfNeeded();
     }
 
@@ -118,27 +118,25 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
     }
+
     private void requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this,
                     Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
 
-                // Опционально: показать rationale, если отказали ранее
                 if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                         Manifest.permission.POST_NOTIFICATIONS)) {
                     new AlertDialog.Builder(this)
                             .setTitle("Разрешить уведомления?")
                             .setMessage("Чтобы приложение могло напоминать Вам о задачах и событиях, нужно разрешение на отправку уведомлений.")
-                            .setPositiveButton("Разрешить", (d, w) -> {
-                                ActivityCompat.requestPermissions(MainActivity.this,
-                                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
-                                        REQUEST_CODE_POST_NOTIFICATIONS);
-                            })
+                            .setPositiveButton("Разрешить", (d, w) ->
+                                    ActivityCompat.requestPermissions(this,
+                                            new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                                            REQUEST_CODE_POST_NOTIFICATIONS))
                             .setNegativeButton("Не сейчас", null)
                             .show();
                 } else {
-                    // Первый запрос или после «Не спрашивать»
                     ActivityCompat.requestPermissions(this,
                             new String[]{Manifest.permission.POST_NOTIFICATIONS},
                             REQUEST_CODE_POST_NOTIFICATIONS);
@@ -161,50 +159,11 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
     private void loadFragment(Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragment_container, fragment)
                 .commit();
-    }
-
-    private void initTodayIfNotExists() {
-        new Thread(() -> {
-            List<CalendarEntity> all = db.calendarDao().getByUserId(userId);
-            int calendarId;
-            if (all.isEmpty()) {
-                CalendarEntity cal = new CalendarEntity(
-                        "Календарь по умолчанию",
-                        System.currentTimeMillis(),
-                        "#67BA80",
-                        userId
-                );
-                cal.userId = userId;
-                calendarId = (int) db.calendarDao().insert(cal);
-            } else {
-                calendarId = all.get(0).id;
-            }
-
-            long ts = getTodayMidnightTimestamp();
-            DayEntity day = db.dayDao().getByTimestampAndCalendarId(ts, calendarId);
-            if (day == null) {
-                day = new DayEntity();
-                day.timestamp = ts;
-                day.calendarId = calendarId;
-                long id = db.dayDao().insert(day);
-                Log.d("DB", "Создан день id=" + id);
-            } else {
-                Log.d("DB", "День уже есть id=" + day.id);
-            }
-        }).start();
-    }
-
-    private long getTodayMidnightTimestamp() {
-        Calendar c = Calendar.getInstance();
-        c.set(Calendar.HOUR_OF_DAY,   0);
-        c.set(Calendar.MINUTE,        0);
-        c.set(Calendar.SECOND,        0);
-        c.set(Calendar.MILLISECOND,   0);
-        return c.getTimeInMillis();
     }
 }

@@ -25,6 +25,9 @@ public class UserRepository {
     public LiveData<UserEntity> getUserByUsername(String username) {
         return userDao.getUserByUsernameLiveData(username);
     }
+    public LiveData<UserEntity> getUser(int userId) {
+        return userDao.getUserByIdLiveData(userId);
+    }
 
     public void insert(UserEntity user) {
         ioExecutor.execute(() -> userDao.insert(user));

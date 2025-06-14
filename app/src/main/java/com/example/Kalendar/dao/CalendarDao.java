@@ -14,6 +14,14 @@ import java.util.List;
 
 @Dao
 public interface CalendarDao {
+    @Query("SELECT * FROM calendars WHERE userId = :userId")
+    List<CalendarEntity> getByUserIdSync(int userId);
+
+    @Insert
+    long insertSync(CalendarEntity calendar);
+
+    @Query("SELECT * FROM calendars WHERE userId = :userId")
+    LiveData<List<CalendarEntity>> getAllForUser(int userId);
 
     // Получить все календари конкретного пользователя
     @Query("SELECT * FROM calendars WHERE userId = :userId")
@@ -50,8 +58,6 @@ public interface CalendarDao {
     @Query("SELECT * FROM calendars WHERE userId = :userId")
     List<CalendarEntity> getByUserId(int userId);
 
-    @Query("SELECT * FROM calendars WHERE userId = :userId")
-    List<CalendarEntity> getAllForUser(int userId);
     @Query("SELECT * FROM calendars WHERE title = :title AND userId = :userId LIMIT 1")
     CalendarEntity getByTitleAndUserId(String title, int userId);
 }

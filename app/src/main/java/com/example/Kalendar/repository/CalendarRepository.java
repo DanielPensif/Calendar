@@ -15,12 +15,12 @@ import javax.inject.Singleton;
 public class CalendarRepository {
 
     private final CalendarDao calendarDao;
-    private final Executor ioExecutor;
+    private final Executor executorIo;
 
     @Inject
-    public CalendarRepository(CalendarDao calendarDao, Executor ioExecutor) {
+    public CalendarRepository(CalendarDao calendarDao, Executor executorIo) {
         this.calendarDao = calendarDao;
-        this.ioExecutor = ioExecutor;
+        this.executorIo = executorIo;
     }
 
     public LiveData<List<CalendarEntity>> getAllCalendars(int userId) {
@@ -28,14 +28,27 @@ public class CalendarRepository {
     }
 
     public void insert(CalendarEntity calendar) {
-        ioExecutor.execute(() -> calendarDao.insert(calendar));
+        executorIo.execute(() -> calendarDao.insert(calendar));
     }
 
     public void update(CalendarEntity calendar) {
-        ioExecutor.execute(() -> calendarDao.update(calendar));
+        executorIo.execute(() -> calendarDao.update(calendar));
     }
 
     public void delete(CalendarEntity calendar) {
-        ioExecutor.execute(() -> calendarDao.delete(calendar));
+        executorIo.execute(() -> calendarDao.delete(calendar));
+    }
+
+    public List<CalendarEntity> getByUserIdSync(int userId) {
+        return calendarDao.getByUserIdSync(userId);
+    }
+
+
+    public void insertSync(CalendarEntity cal) {
+        executorIo.execute(() -> calendarDao.insertSync(cal));
+    }
+
+    public LiveData<List<CalendarEntity>> getAllForUser(int userId) {
+        return calendarDao.getAllForUser(userId);
     }
 }

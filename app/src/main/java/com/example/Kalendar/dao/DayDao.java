@@ -14,6 +14,20 @@ import java.util.List;
 
 @Dao
 public interface DayDao {
+    @Query("SELECT * FROM days WHERE timestamp = :ts AND calendarId = :calId")
+    DayEntity getByTimestampAndCalendarIdSync(long ts, int calId);
+
+    @Insert
+    long insertSync(DayEntity day);
+
+    @Query("SELECT * FROM days WHERE timestamp = :ts AND calendarId IN(:cIds)")
+    List<DayEntity> getByTimestampAndCalendarIds(long ts, List<Integer> cIds);
+
+    @Query("SELECT * FROM days WHERE calendarId IN(:cIds)")
+    List<DayEntity> getByDayIdsForCalendars(List<Integer> cIds);
+
+    @Query("SELECT * FROM days WHERE id = :id")
+    DayEntity getById(int id);
 
     // Получить все дни для заданного календаря
     @Query("SELECT * FROM days WHERE calendarId = :calendarId")
@@ -39,16 +53,11 @@ public interface DayDao {
     @Query("SELECT * FROM days")
     List<DayEntity> getAll();
 
-    @Query("SELECT * FROM days WHERE id = :id LIMIT 1")
-    DayEntity getById(int id);
-
     @Query("SELECT * FROM days WHERE timestamp BETWEEN :start AND :end")
     List<DayEntity> getDaysBetween(long start, long end);
 
     @Query("SELECT * FROM days WHERE calendarId IN(:calendarIds)")
     List<DayEntity> getByCalendarIds(List<Integer> calendarIds);
-    @Query("SELECT * FROM days WHERE timestamp = :timestamp AND calendarId IN (:calendarIds)")
-    List<DayEntity> getByTimestampAndCalendarIds(long timestamp, List<Integer> calendarIds);
     @Query("SELECT * FROM days WHERE timestamp BETWEEN :start AND :end AND calendarId IN (:calendarIds)")
     List<DayEntity> getDaysBetweenForCalendars(long start, long end, List<Integer> calendarIds);
 

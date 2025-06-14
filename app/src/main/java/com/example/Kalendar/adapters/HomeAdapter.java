@@ -80,7 +80,10 @@ public class HomeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-
+    public void setItems(List<HomeItem> newItems) {
+        items.clear();
+        items.addAll(newItems);
+    }
 
     @Override
     public int getItemCount() {

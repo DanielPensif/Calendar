@@ -1,6 +1,5 @@
 package com.example.Kalendar.fragments;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
@@ -15,8 +14,11 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
@@ -25,176 +27,136 @@ import com.example.Kalendar.HistoryAndStatsActivity;
 import com.example.Kalendar.R;
 import com.example.Kalendar.SettingsActivity;
 import com.example.Kalendar.adapters.SessionManager;
-import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.models.UserEntity;
+import com.example.Kalendar.viewmodel.ProfileViewModel;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class ProfileFragment extends Fragment {
-    private static final int PICK_IMAGE = 100;
+import javax.inject.Inject;
 
-    private ImageView profileImage;
-    private TextView profileName;
-    private TextView profileNickname;
-    private TextView profileDescription;
-    private TextView statsButton;
-    private ImageView btnLogout;
-    private ImageView settingsButton;
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
+public class ProfileFragment extends Fragment {
+    private ImageView profileImage, btnLogout, settingsButton;
+    private TextView profileName, profileNickname, profileDescription, statsButton;
+    private ProfileViewModel vm;
     private UserEntity currentUser;
 
-    @SuppressLint("MissingInflatedId")
+    private final ActivityResultLauncher<Intent> pickImageLauncher =
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                            Uri uri = result.getData().getData();
+                            if (uri!=null) onImagePicked(uri);
+                        }
+                    }
+            );
+
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_profile, container, false);
+    public View onCreateView(LayoutInflater inf, ViewGroup container, Bundle savedInstanceState) {
+        View v = inf.inflate(R.layout.fragment_profile, container, false);
+        profileImage       = v.findViewById(R.id.profileImage);
+        profileName        = v.findViewById(R.id.profileName);
+        profileNickname    = v.findViewById(R.id.profileNickname);
+        profileDescription = v.findViewById(R.id.profileDescription);
+        statsButton        = v.findViewById(R.id.statsButton);
+        btnLogout          = v.findViewById(R.id.btnLogout);
+        settingsButton     = v.findViewById(R.id.settingsButton);
 
-        profileImage       = view.findViewById(R.id.profileImage);
-        profileName        = view.findViewById(R.id.profileName);
-        profileNickname    = view.findViewById(R.id.profileNickname);
-        profileDescription = view.findViewById(R.id.profileDescription);
-        statsButton        = view.findViewById(R.id.statsButton);
-        btnLogout          = view.findViewById(R.id.btnLogout);
-        settingsButton     = view.findViewById(R.id.settingsButton);
+        vm = new ViewModelProvider(this).get(ProfileViewModel.class);
+        vm.user.observe(getViewLifecycleOwner(), user -> {
+            if (user == null) return;
+            currentUser = user;
+            profileName.setText(user.name != null && !user.name.isEmpty() ? user.name : "Имя");
+            profileNickname.setText("@" + user.username);
+            profileDescription.setText(user.description != null && !user.description.isEmpty()
+                    ? user.description : "Описание профиля");
+            if (user.photoUri != null && !user.photoUri.isEmpty()) {
+                File f = new File(user.photoUri);
+                if (f.exists()) {
+                    Glide.with(this)
+                            .load(f)
+                            .apply(RequestOptions.circleCropTransform())
+                            .placeholder(R.drawable.ic_camera_profile)
+                            .into(profileImage);
+                }
+            }
+        });
+
+        int uid = SessionManager.getLoggedInUserId(requireContext());
+        vm.load(uid);
 
         setupListeners();
-        loadUserData();
-        return view;
+        return v;
     }
 
     private void setupListeners() {
-        profileImage.setOnClickListener(v -> openGallery());
-        profileName.setOnClickListener(v -> editField(profileName));
-        profileDescription.setOnClickListener(v -> editField(profileDescription));
-        statsButton.setOnClickListener(v -> startActivity(new Intent(getContext(), HistoryAndStatsActivity.class)));
-
-        // Добавленный код для перехода в настройки
-        settingsButton.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), SettingsActivity.class);
-            startActivity(intent);
+        profileImage.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK,
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            pickImageLauncher.launch(intent);
         });
-
+        profileName.setOnClickListener(v -> editField(profileName, "Имя", vm::saveName));
+        profileDescription.setOnClickListener(v -> editField(profileDescription, "Описание", vm::saveDescription));
+        statsButton.setOnClickListener(v ->
+                startActivity(new Intent(getContext(), HistoryAndStatsActivity.class))
+        );
+        settingsButton.setOnClickListener(v ->
+                startActivity(new Intent(getActivity(), SettingsActivity.class))
+        );
         btnLogout.setOnClickListener(v -> new AlertDialog.Builder(requireContext())
                 .setTitle("Выход из аккаунта")
-                .setMessage("Вы уверены, что хотите выйти из аккаунта?")
-                .setPositiveButton("Да", (dialog, which) -> logout())
+                .setMessage("Вы уверены?")
+                .setPositiveButton("Да", (d,w) -> {
+                    SessionManager.clear(requireContext());
+                    startActivity(new Intent(getActivity(), AuthActivity.class)
+                            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK));
+                })
                 .setNegativeButton("Отмена", null)
                 .show());
     }
 
-
-    private void loadUserData() {
-        new Thread(() -> {
-            int userId = SessionManager.getLoggedInUserId(requireContext());
-            currentUser = AppDatabase.getDatabase(requireContext()).userDao().getById(userId);
-            requireActivity().runOnUiThread(() -> {
-                if (currentUser == null) return;
-
-                String name = (currentUser.name != null && !currentUser.name.isEmpty())
-                        ? currentUser.name : "Имя";
-                profileName.setText(name);
-
-                profileNickname.setText("@" + currentUser.username);
-
-                String desc = (currentUser.description != null && !currentUser.description.isEmpty())
-                        ? currentUser.description : "Описание профиля";
-                profileDescription.setText(desc);
-
-                if (currentUser.photoUri != null && !currentUser.photoUri.isEmpty()) {
-                    File file = new File(currentUser.photoUri);
-                    if (file.exists()) {
-                        Glide.with(this)
-                                .load(file)
-                                .apply(RequestOptions.circleCropTransform())
-                                .placeholder(R.drawable.ic_camera_profile)
-                                .into(profileImage);
-                    }
-                }
-            });
-        }).start();
-    }
-
-    private void openGallery() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        startActivityForResult(intent, PICK_IMAGE);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_IMAGE && resultCode == Activity.RESULT_OK && data != null) {
-            Uri uri = data.getData();
-            if (uri == null) return;
-
-            String localPath = copyImageToInternalStorage(uri);
-            if (localPath == null) return;
-
-            Glide.with(this)
-                    .load(new File(localPath))
-                    .apply(RequestOptions.circleCropTransform())
-                    .placeholder(R.drawable.ic_camera_profile)
-                    .into(profileImage);
-
-            new Thread(() -> {
-                if (currentUser != null) {
-                    currentUser.photoUri = localPath;
-                    AppDatabase.getDatabase(requireContext()).userDao().update(currentUser);
-                }
-            }).start();
-        }
-    }
-
-    private String copyImageToInternalStorage(Uri uri) {
-        try (InputStream inputStream = requireContext().getContentResolver().openInputStream(uri)) {
-            String filename = "profile_" + System.currentTimeMillis() + ".jpg";
-            File file = new File(requireContext().getFilesDir(), filename);
-
-            try (OutputStream outputStream = new FileOutputStream(file)) {
-                byte[] buffer = new byte[4096];
-                int length;
-                while ((length = inputStream.read(buffer)) > 0) {
-                    outputStream.write(buffer, 0, length);
-                }
-                return file.getAbsolutePath();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private void editField(TextView field) {
+    private void editField(TextView field, String title, java.util.function.BiConsumer<String, UserEntity> saver) {
         EditText ed = new EditText(requireContext());
         ed.setInputType(InputType.TYPE_CLASS_TEXT);
         ed.setText(field.getText());
         new AlertDialog.Builder(requireContext())
-                .setTitle("Редактировать")
+                .setTitle("Редактировать " + title)
                 .setView(ed)
-                .setPositiveButton("Сохранить", (dialog, which) -> {
-                    String value = ed.getText().toString().trim();
-                    field.setText(value);
-                    saveField(field, value);
+                .setPositiveButton("Сохранить", (d,w) -> {
+                    String val = ed.getText().toString().trim();
+                    field.setText(val);
+                    if (currentUser != null) saver.accept(val, currentUser);
                 })
                 .setNegativeButton("Отмена", null)
                 .show();
     }
 
-    private void saveField(TextView field, String value) {
-        new Thread(() -> {
-            if (currentUser == null) return;
-            if (field == profileName) currentUser.name = value;
-            else if (field == profileDescription) currentUser.description = value;
-            AppDatabase.getDatabase(requireContext()).userDao().update(currentUser);
-        }).start();
-    }
+    private void onImagePicked(Uri uri) {
+        try (InputStream in = requireContext().getContentResolver().openInputStream(uri)) {
+            String fn = "profile_" + System.currentTimeMillis() + ".jpg";
+            File file = new File(requireContext().getFilesDir(), fn);
+            try (OutputStream out = new FileOutputStream(file)) {
+                byte[] buf = new byte[4096];
+                int r;
+                while ((r = in.read(buf))>0) out.write(buf,0,r);
+            }
+            Glide.with(this)
+                    .load(file)
+                    .apply(RequestOptions.circleCropTransform())
+                    .placeholder(R.drawable.ic_camera_profile)
+                    .into(profileImage);
 
-    private void logout() {
-        SessionManager.clear(requireContext());
-        Intent intent = new Intent(requireActivity(), AuthActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
+            if (currentUser != null) vm.savePhotoUri(file.getAbsolutePath(), currentUser);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
