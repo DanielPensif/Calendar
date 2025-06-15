@@ -14,6 +14,10 @@ import java.util.List;
 
 @Dao
 public interface EventDao {
+    @Query("SELECT * FROM events WHERE dayId IN (SELECT id FROM days WHERE timestamp = :ts AND calendarId IN (:calendarIds))")
+    List<EventEntity> getEventsForDate(long ts, List<Integer> calendarIds);
+    @Query("SELECT * FROM events")
+    List<EventEntity> getAllEvents();
 
     // Получить все события для конкретного дня (по dayId)
     @Query("SELECT * FROM events WHERE dayId = :dayId")

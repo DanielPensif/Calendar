@@ -85,4 +85,14 @@ public class DayRepository {
     public List<DayEntity> getById(int id) {
         return Collections.singletonList(dayDao.getById(id));
     }
+    public DayEntity getOrCreateDaySync(long timestamp, int calendarId) {
+        DayEntity d = dayDao.getByTimestampAndCalendarId(timestamp, calendarId);
+        if (d == null) {
+            d = new DayEntity();
+            d.timestamp = timestamp;
+            d.calendarId = calendarId;
+            d.id = (int) dayDao.insert(d);
+        }
+        return d;
+    }
 }

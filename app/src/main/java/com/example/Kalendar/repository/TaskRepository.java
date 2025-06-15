@@ -5,7 +5,6 @@ import androidx.lifecycle.LiveData;
 import com.example.Kalendar.dao.TaskDao;
 import com.example.Kalendar.models.TaskEntity;
 
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executor;
 
@@ -41,4 +40,12 @@ public class TaskRepository {
     public void delete(TaskEntity task) {
         ioExecutor.execute(() -> taskDao.delete(task));
     }
+    public List<TaskEntity> getTasksForDaySync(int dayId) {
+        return taskDao.getTasksForDay(dayId);
+    }
+    public List<TaskEntity> getTasksForDate(long ts, List<Integer> calIds) {
+        return taskDao.getTasksForDate(ts, calIds);
+    }
+    public void save(TaskEntity t) { taskDao.insert(t); }
+    public void updateSync(TaskEntity t) { taskDao.update(t); }
 }

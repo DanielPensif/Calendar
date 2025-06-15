@@ -14,6 +14,8 @@ import java.util.List;
 
 @Dao
 public interface TaskDao {
+    @Query("SELECT * FROM tasks WHERE dayId IN (SELECT id FROM days WHERE timestamp = :ts AND calendarId IN (:calendarIds))")
+    List<TaskEntity> getTasksForDate(long ts, List<Integer> calendarIds);
 
     // Получить все задачи для конкретного дня
     @Query("SELECT * FROM tasks WHERE dayId = :dayId")

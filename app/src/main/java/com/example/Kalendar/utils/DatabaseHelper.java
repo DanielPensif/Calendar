@@ -1,7 +1,7 @@
 package com.example.Kalendar.utils;
 
 import android.content.Context;
-import android.util.Pair;
+import androidx.core.util.Pair;
 
 import com.example.Kalendar.adapters.HistoryItem;
 import com.example.Kalendar.adapters.SessionManager;

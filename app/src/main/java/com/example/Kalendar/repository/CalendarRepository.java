@@ -51,4 +51,23 @@ public class CalendarRepository {
     public LiveData<List<CalendarEntity>> getAllForUser(int userId) {
         return calendarDao.getAllForUser(userId);
     }
+    public LiveData<List<CalendarEntity>> getCalendarsForUser(int userId) {
+        return calendarDao.getByUserIdLiveData(userId);
+    }
+
+    public CalendarEntity getByTitleAndUserIdSync(String title, int userId) {
+        return calendarDao.getByTitleAndUserId(title, userId);
+    }
+
+    public long insertCalendarSync(CalendarEntity calendar) {
+        return calendarDao.insertSync(calendar);
+    }
+
+    public void updateCalendarSync(CalendarEntity calendar) {
+        calendarDao.updateSync(calendar);
+    }
+
+    public void deleteCalendarSync(CalendarEntity calendar) {
+        calendarDao.deleteSync(calendar);
+    }
 }

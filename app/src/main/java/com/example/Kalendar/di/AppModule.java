@@ -89,8 +89,8 @@ public class AppModule {
     // 4. Создаём репозитории, инжектя DAO + Executor
     @Provides
     @Singleton
-    public EventRepository provideEventRepository(EventDao eventDao, Executor executor) {
-        return new EventRepository(eventDao, executor);
+    public EventRepository provideEventRepository(EventDao eventDao, DayDao dayDao, Executor executor) {
+        return new EventRepository(eventDao, dayDao, executor);
     }
 
     @Provides
@@ -107,8 +107,8 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public DayRepository provideDayRepository(DayDao dayDao, Executor executor) {
-        return new DayRepository(dayDao, executor);
+    public DayRepository provideDayRepository(DayDao dayDao, TaskDao taskDao, EventDao eventDao, Executor executor) {
+        return new DayRepository(dayDao, taskDao, eventDao, executor);
     }
 
     @Provides
