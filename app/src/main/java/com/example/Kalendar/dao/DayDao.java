@@ -62,7 +62,7 @@ public interface DayDao {
     List<DayEntity> getDaysBetweenForCalendars(long start, long end, List<Integer> calendarIds);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(DayEntity day);
+    long insert(DayEntity day);
 
     @Update
     void update(DayEntity day);

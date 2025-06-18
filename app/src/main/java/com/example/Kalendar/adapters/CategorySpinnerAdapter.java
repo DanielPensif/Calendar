@@ -1,5 +1,6 @@
 package com.example.Kalendar.adapters;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Color;
@@ -25,6 +26,7 @@ import com.flask.colorpicker.ColorPickerView;
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
 
 import java.util.List;
+import java.util.Objects;
 
 public class CategorySpinnerAdapter extends BaseAdapter {
     private final Context context;
@@ -72,7 +74,7 @@ public class CategorySpinnerAdapter extends BaseAdapter {
         btnEdit.setFocusable(false);
         btnDelete.setFocusable(false);
 
-        Drawable d = context.getDrawable(R.drawable.flag_circle).mutate();
+        @SuppressLint("UseCompatLoadingForDrawables") Drawable d = Objects.requireNonNull(context.getDrawable(R.drawable.flag_circle)).mutate();
         d.setTint(Color.parseColor(cat.color));
         flag.setBackground(d);
 

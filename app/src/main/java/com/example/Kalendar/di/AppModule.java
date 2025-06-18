@@ -95,8 +95,8 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public TaskRepository provideTaskRepository(TaskDao taskDao, Executor executor) {
-        return new TaskRepository(taskDao, executor);
+    public TaskRepository provideTaskRepository(TaskDao taskDao, DayDao dayDao, Executor executor) {
+        return new TaskRepository(taskDao, dayDao, executor);
     }
 
     @Provides

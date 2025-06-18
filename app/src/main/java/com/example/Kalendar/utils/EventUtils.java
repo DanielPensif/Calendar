@@ -78,10 +78,6 @@ public class EventUtils {
         return count == null || (diff / interval) < count;
     }
 
-
-
-
-
     public static Set<LocalDate> parseExcludedDates(String raw) {
         Set<LocalDate> set = new HashSet<>();
         if (raw == null || raw.trim().isEmpty()) return set;

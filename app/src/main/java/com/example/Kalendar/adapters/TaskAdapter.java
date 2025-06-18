@@ -1,8 +1,12 @@
 package com.example.Kalendar.adapters;
+
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.view.*;
-import android.widget.*;
+import android.widget.ImageButton;
+import android.widget.PopupMenu;
+import android.widget.TextView;
 
 import androidx.annotation.*;
 import androidx.appcompat.app.AppCompatActivity;
@@ -10,277 +14,146 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.Kalendar.R;
-import com.example.Kalendar.db.AppDatabase;
 import com.example.Kalendar.fragments.AddTaskDialogFragment;
 import com.example.Kalendar.fragments.CompleteTaskDialogFragment;
 import com.example.Kalendar.fragments.TasksFragment;
-import com.example.Kalendar.models.DayEntity;
 import com.example.Kalendar.models.TaskEntity;
-import com.example.Kalendar.utils.DatabaseHelper;
+import com.example.Kalendar.db.AppDatabase;
 
 import org.threeten.bp.Instant;
-import org.threeten.bp.LocalDate;
 import org.threeten.bp.ZoneId;
+import org.threeten.bp.LocalDate;
 
-import java.util.*;
-public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
-    private final List<TaskEntity> list;
+import java.util.List;
+import java.util.Objects;
 
-    private static final int TYPE_TASK = 0;
-    private static final int TYPE_HEADER = 1;
-
+public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private static final int TYPE_HEADER = 0, TYPE_TASK = 1;
+    private final List<TaskEntity> items;
     private final OnTaskChangedListener listener;
-    private final int currentUserId;
-    public TaskAdapter(Context ctx, List<TaskEntity> tasks, OnTaskChangedListener listener) {
-        this.currentUserId = SessionManager.getLoggedInUserId(ctx);
-        this.list = tasks;
-        this.listener = listener;
+    private final Context ctx;
+
+    public interface OnTaskChangedListener { void onTaskChanged(); }
+
+    public TaskAdapter(Context ctx, List<TaskEntity> items, OnTaskChangedListener l) {
+        this.ctx = ctx;
+        this.items = items;
+        this.listener = l;
     }
 
-    public interface OnTaskChangedListener {
-        void onTaskChanged();
-    }
-
-    public class ViewHolder extends RecyclerView.ViewHolder {
-        TextView title, category, comment;
-
-        ImageButton btnComplete, btnMenu;
-
-        public ViewHolder(View itemView) {
-            super(itemView);
-            title = itemView.findViewById(R.id.taskTitle);
-            category = itemView.findViewById(R.id.taskCategory);
-            comment = itemView.findViewById(R.id.taskComment);
-            btnComplete = itemView.findViewById(R.id.btnComplete);
-            btnMenu = itemView.findViewById(R.id.btnMenu);
-        }
-
-        public void bind(TaskEntity task) {
-            if (task == null) return; // заголовок
-
-            title.setText(task.title + (task.done ? " ✅" : ""));
-            category.setText("Категория: " + task.category);
-
-            if (task.comment != null && !task.comment.trim().isEmpty()) {
-                comment.setText(task.comment);
-                comment.setVisibility(View.VISIBLE);
-            } else {
-                comment.setVisibility(View.GONE);
+    @SuppressLint("NotifyDataSetChanged")
+    public void setItems(List<TaskEntity> newItems) {
+        items.clear();
+        // вставляем null перед первым выполненным
+        boolean seenDone=false;
+        for (TaskEntity t: newItems) {
+            if (t.done && !seenDone) {
+                seenDone=true;
+                items.add(null);
             }
+            items.add(t);
+        }
+        notifyDataSetChanged();
+    }
 
-            if (task.done) {
-                itemView.setBackgroundColor(Color.parseColor("#E0E0E0"));
+    @Override public int getItemViewType(int pos) {
+        return items.get(pos)==null ? TYPE_HEADER : TYPE_TASK;
+    }
+
+    @Override public int getItemCount() { return items.size(); }
+
+    @NonNull @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup p, int vt) {
+        LayoutInflater i = LayoutInflater.from(p.getContext());
+        if (vt==TYPE_HEADER) {
+            return new HeaderHolder(i.inflate(R.layout.item_task_section_header,p,false));
+        } else {
+            return new TaskHolder(i.inflate(R.layout.item_task,p,false));
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder h, int pos) {
+        if (h instanceof TaskHolder) ((TaskHolder)h).bind(items.get(pos));
+    }
+
+    static class HeaderHolder extends RecyclerView.ViewHolder {
+        HeaderHolder(View v){ super(v); }
+    }
+
+    class TaskHolder extends RecyclerView.ViewHolder {
+        TextView tvTitle, tvCat, tvComment;
+        ImageButton btnComplete, btnMenu;
+        TaskHolder(View v){
+            super(v);
+            tvTitle=v.findViewById(R.id.taskTitle);
+            tvCat=v.findViewById(R.id.taskCategory);
+            tvComment=v.findViewById(R.id.taskComment);
+            btnComplete=v.findViewById(R.id.btnComplete);
+            btnMenu=v.findViewById(R.id.btnMenu);
+        }
+        void bind(TaskEntity t){
+            tvTitle.setText(t.title + (t.done ? " ✅" : ""));
+            tvCat.setText("Категория: " + t.category);
+            if (t.comment!=null && !t.comment.isEmpty()) {
+                tvComment.setText(t.comment);
+                tvComment.setVisibility(View.VISIBLE);
+            } else tvComment.setVisibility(View.GONE);
+
+            if (t.done) {
+                itemView.setBackgroundColor(Color.LTGRAY);
                 btnComplete.setVisibility(View.GONE);
                 btnMenu.setVisibility(View.VISIBLE);
-
-                btnMenu.setOnClickListener(v -> {
-                    PopupMenu menu = new PopupMenu(v.getContext(), btnMenu);
-                    menu.getMenu().add("Редактировать задачу");
-                    menu.getMenu().add("Отменить выполнение");
-                    menu.getMenu().add("Изменить ревью");
-
-
-
-                    menu.setOnMenuItemClickListener(item -> {
-                        switch (Objects.requireNonNull(item.getTitle()).toString()) {
-                            case "Редактировать задачу":
-                                new Thread(() -> {
-                                    if (listener != null) listener.onTaskChanged();
-                                    AppDatabase db = AppDatabase.getDatabase(v.getContext());
-                                    DayEntity day = db.dayDao().getById(task.dayId);
-
-                                    if (day != null) {
-                                        LocalDate date = Instant.ofEpochMilli(day.timestamp)
-                                                .atZone(ZoneId.systemDefault())
-                                                .toLocalDate();
-
-                                        ((AppCompatActivity) v.getContext()).runOnUiThread(() -> {
-                                            AddTaskDialogFragment editDialog = AddTaskDialogFragment.editInstance(task.id, date);
-                                            editDialog.setOnTaskSavedListener(() -> {
-                                                Fragment f = ((AppCompatActivity) v.getContext())
-                                                        .getSupportFragmentManager()
-                                                        .findFragmentByTag("f0");
-                                                if (f instanceof TasksFragment) ((TasksFragment) f).refresh();
-                                            });
-                                            editDialog.show(((AppCompatActivity) v.getContext()).getSupportFragmentManager(), "editTask");
-                                        });
-                                    }
-                                }).start();
-                                return true;
-
-
-                            case "Отменить выполнение":
-                                task.done = false;
-                                task.doneReason = null;
-                                task.completionDate = null;
-                                task.completionTime = null;
-                                task.reviewComment = null;
-                                task.rating = null;
-                                new Thread(() -> {
-                                    AppDatabase.getDatabase(v.getContext()).taskDao().update(task);
-                                    DatabaseHelper.updateDayCompletionStatus(v.getContext(), task.dayId);
-                                    if (listener != null) listener.onTaskChanged();
-                                    if (v.getContext() instanceof AppCompatActivity) {
-                                        Fragment f = ((AppCompatActivity) v.getContext())
-                                                .getSupportFragmentManager()
-                                                .findFragmentByTag("f0");
-                                        if (f instanceof TasksFragment) ((TasksFragment) f).refresh();
-                                    }
-                                }).start();
-
-                                return true;
-                            case "Изменить ревью":
-                                CompleteTaskDialogFragment dialog = CompleteTaskDialogFragment.newInstance(task.id);
-                                dialog.setOnTaskCompletedListener(() -> {
-                                    if (listener != null) listener.onTaskChanged();
-                                    if (v.getContext() instanceof AppCompatActivity) {
-                                        Fragment f = ((AppCompatActivity) v.getContext())
-                                                .getSupportFragmentManager()
-                                                .findFragmentByTag("f0");
-                                        if (f instanceof TasksFragment) ((TasksFragment) f).refresh();
-                                    }
-                                });
-                                dialog.show(((AppCompatActivity) v.getContext()).getSupportFragmentManager(), "editReview");
-                                return true;
-                        }
-                        return false;
-                    });
-                    menu.show();
-                });
-
+                btnMenu.setOnClickListener(v -> showDoneMenu(t));
             } else {
                 itemView.setBackgroundColor(Color.WHITE);
                 btnComplete.setVisibility(View.VISIBLE);
                 btnMenu.setVisibility(View.GONE);
-
-                btnComplete.setOnClickListener(v -> {
-                    CompleteTaskDialogFragment dialog = CompleteTaskDialogFragment.newInstance(task.id);
-                    dialog.setOnTaskCompletedListener(() -> {
-                        if (listener != null) listener.onTaskChanged();
-                        if (v.getContext() instanceof AppCompatActivity) {
-                            Fragment f = ((AppCompatActivity) v.getContext())
-                                    .getSupportFragmentManager()
-                                    .findFragmentByTag("f0");
-                            if (f instanceof TasksFragment) ((TasksFragment) f).refresh();
-                        }
-                        DatabaseHelper.updateDayCompletionStatus(v.getContext(), task.dayId);
-                    });
-                    dialog.show(((AppCompatActivity) v.getContext()).getSupportFragmentManager(), "completeTask");
-                });
+                btnComplete.setOnClickListener(v -> markDone(t));
             }
 
-            if (!task.done) {
-                itemView.setOnClickListener(v -> new Thread(() -> {
+            itemView.setOnClickListener(v -> {
+                // редактировать
+                new Thread(() -> {
                     AppDatabase db = AppDatabase.getDatabase(v.getContext());
-                    DayEntity day = db.dayDao().getById(task.dayId);
+                    TasksFragment frag = (TasksFragment)((AppCompatActivity)ctx).getSupportFragmentManager().findFragmentByTag("f0");
+                    long ts = db.dayDao().getById(t.dayId).timestamp;
+                    LocalDate d = Instant.ofEpochMilli(ts)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
+                    ((AppCompatActivity)ctx).runOnUiThread(() -> {
+                        AddTaskDialogFragment dlg = AddTaskDialogFragment.editInstance(t.id,d);
+                        dlg.setOnTaskSavedListener(listener::onTaskChanged);
+                        dlg.show(((AppCompatActivity)ctx).getSupportFragmentManager(),"editTask");
+                    });
+                }).start();
+            });
+        }
 
-                    if (day != null) {
-                        LocalDate date = Instant.ofEpochMilli(day.timestamp)
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDate();
-
-                        ((AppCompatActivity) v.getContext()).runOnUiThread(() -> {
-                            AddTaskDialogFragment dialog = AddTaskDialogFragment.editInstance(task.id, date);
-                            dialog.setOnTaskSavedListener(() -> {
-                                if (v.getContext() instanceof AppCompatActivity) {
-                                    Fragment f = ((AppCompatActivity) v.getContext())
-                                            .getSupportFragmentManager()
-                                            .findFragmentByTag("f0");
-                                    if (f instanceof TasksFragment) ((TasksFragment) f).refresh();
-                                }
-                            });
-                            dialog.show(((AppCompatActivity) v.getContext()).getSupportFragmentManager(), "editTask");
-                        });
-                    }
-                }).start());
-            } else {
-                itemView.setOnClickListener(null);
-            }
-
-            itemView.setOnLongClickListener(v -> {
-                PopupMenu menu = new PopupMenu(v.getContext(), v);
-                menu.getMenu().add("Дублировать");
-                menu.getMenu().add("Удалить");
-
-                menu.setOnMenuItemClickListener(item -> switch (Objects.requireNonNull(item.getTitle()).toString()) {
-                    case "Дублировать" -> {
-                        new Thread(() -> {
-                            AppDatabase db = AppDatabase.getDatabase(v.getContext());
-
-                            TaskEntity duplicate = new TaskEntity();
-                            duplicate.title = task.title + " (копия)";
-                            duplicate.comment = task.comment;
-                            duplicate.category = task.category;
-                            duplicate.calendarId = task.calendarId;
-                            duplicate.dayId = task.dayId;
-                            duplicate.done = false;
-
-                            db.taskDao().insert(duplicate);
-
-                            if (v.getContext() instanceof AppCompatActivity) {
-                                Fragment f = ((AppCompatActivity) v.getContext())
-                                        .getSupportFragmentManager()
-                                        .findFragmentByTag("f0");
-                                if (f instanceof TasksFragment) ((TasksFragment) f).refresh();
-                            }
-                        }).start();
-                        yield true;
-                    }
-                    case "Удалить" -> {
-                        new Thread(() -> {
-                            AppDatabase db = AppDatabase.getDatabase(v.getContext());
-                            db.taskDao().delete(task);
-
-                            if (v.getContext() instanceof AppCompatActivity) {
-                                Fragment f = ((AppCompatActivity) v.getContext())
-                                        .getSupportFragmentManager()
-                                        .findFragmentByTag("f0");
-                                if (f instanceof TasksFragment) ((TasksFragment) f).refresh();
-                            }
-                        }).start();
-                        yield true;
-                    }
-                    default -> false;
-                });
-
-                menu.show();
+        private void showDoneMenu(TaskEntity t){
+            PopupMenu m=new PopupMenu(itemView.getContext(),btnMenu);
+            m.getMenu().add("Отменить выполнение");
+            m.getMenu().add("Редактировать");
+            m.setOnMenuItemClickListener(it -> {
+                String title=it.getTitle().toString();
+                if (title.equals("Отменить выполнение")) {
+                    t.done=false;
+                    new Thread(() -> {
+                        AppDatabase.getDatabase(ctx).taskDao().update(t);
+                        listener.onTaskChanged();
+                    }).start();
+                } else {
+                    markDone(t);
+                }
                 return true;
             });
+            m.show();
+        }
 
-
+        private void markDone(TaskEntity t) {
+            CompleteTaskDialogFragment dlg = CompleteTaskDialogFragment.newInstance(t.id);
+            dlg.setOnTaskCompletedListener(listener::onTaskChanged);
+            dlg.show(((AppCompatActivity)ctx).getSupportFragmentManager(),"complete");
         }
     }
-
-    @NonNull
-    @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (viewType == TYPE_HEADER) {
-            View headerView = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_task_section_header, parent, false);
-            return new ViewHolder(headerView);
-        } else {
-            View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_task, parent, false);
-            return new ViewHolder(v);
-        }
-    }
-
-
-    @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.bind(list.get(position));
-    }
-
-    @Override
-    public int getItemCount() {
-        return list.size();
-    }
-
-    @Override
-    public int getItemViewType(int position) {
-        TaskEntity t = list.get(position);
-        return t == null ? TYPE_HEADER : TYPE_TASK;
-    }
-
 }
-

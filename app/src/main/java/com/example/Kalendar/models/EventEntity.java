@@ -43,7 +43,6 @@ public class EventEntity {
 
     @Ignore
     public String date; // используется для виртуальных экземпляров повторов
-
 }
 
 

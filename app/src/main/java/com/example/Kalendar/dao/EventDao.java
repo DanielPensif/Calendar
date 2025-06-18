@@ -66,7 +66,7 @@ public interface EventDao {
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(EventEntity event);
+    long insert(EventEntity event);
 
     @Update
     void update(EventEntity event);

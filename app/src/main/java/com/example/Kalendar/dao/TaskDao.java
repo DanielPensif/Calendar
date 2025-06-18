@@ -37,7 +37,7 @@ public interface TaskDao {
     List<TaskEntity> getTasksForDay(int dayId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(TaskEntity task);
+    long insert(TaskEntity task);
 
     @Update
     void update(TaskEntity task);

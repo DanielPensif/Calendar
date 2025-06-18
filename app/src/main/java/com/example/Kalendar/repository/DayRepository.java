@@ -8,9 +8,16 @@ import com.example.Kalendar.dao.TaskDao;
 import com.example.Kalendar.models.DayEntity;
 import com.example.Kalendar.models.EventEntity;
 import com.example.Kalendar.models.TaskEntity;
+import com.example.Kalendar.utils.EventUtils;
 
+import org.threeten.bp.Instant;
+import org.threeten.bp.LocalDate;
+import org.threeten.bp.ZoneId;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
@@ -94,5 +101,46 @@ public class DayRepository {
             d.id = (int) dayDao.insert(d);
         }
         return d;
+    }
+    public List<TaskEntity> getTasksForDate(long dayStartTs, List<Integer> calendarIds) {
+        List<TaskEntity> out = new ArrayList<>();
+        List<DayEntity> days = dayDao.getByTimestampAndCalendarIds(dayStartTs, calendarIds);
+        for (DayEntity d : days) {
+            out.addAll(taskDao.getTasksForDay(d.id));
+        }
+        return out;
+    }
+    public List<EventEntity> getEventsForDate(long dayStartTs, List<Integer> calendarIds) {
+        List<EventEntity> out = new ArrayList<>();
+        Set<Integer> seen = new HashSet<>();
+
+        // 1) оригинальные
+        List<DayEntity> days = dayDao.getByTimestampAndCalendarIds(dayStartTs, calendarIds);
+        for (DayEntity d : days) {
+            for (EventEntity e : eventDao.getEventsForDay(d.id)) {
+                out.add(e);
+                seen.add(e.id);
+            }
+        }
+
+        // 2) виртуальные (повторения)
+        LocalDate targetDate = Instant.ofEpochMilli(dayStartTs)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
+        List<EventEntity> all = eventDao.getByCalendarIds(calendarIds);
+        for (EventEntity e : all) {
+            if (seen.contains(e.id) || e.repeatRule == null || e.repeatRule.isEmpty()) continue;
+            DayEntity base = dayDao.getById(e.dayId);
+            if (base == null) continue;
+            LocalDate startDate = Instant.ofEpochMilli(base.timestamp)
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+            if (EventUtils.occursOnDate(e, targetDate, startDate)) {
+                out.add(e);
+            }
+        }
+
+        return out;
     }
 }
