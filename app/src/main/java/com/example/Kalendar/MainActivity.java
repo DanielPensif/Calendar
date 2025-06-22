@@ -1,5 +1,6 @@
 package com.example.Kalendar;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -11,7 +12,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import android.Manifest;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,25 +26,32 @@ import com.example.Kalendar.fragments.CalendarFragment;
 import com.example.Kalendar.fragments.HomeFragment;
 import com.example.Kalendar.fragments.ProfileFragment;
 import com.example.Kalendar.viewmodel.MainViewModel;
+import com.jakewharton.threetenabp.AndroidThreeTen;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class MainActivity extends AppCompatActivity {
 
-    private ImageView navHomeIcon, navCalendarIcon, navProfileIcon;
-    private TextView navHome, navCalendar, navProfile;
-    private MainViewModel viewModel;
     private static final int REQUEST_CODE_POST_NOTIFICATIONS = 1001;
+
+    private MainViewModel viewModel;
     private int userId;
+
+    // Навигационные элементы
+    private LinearLayout navHomeContainer, navCalendarContainer, navProfileContainer;
+    private TextView navHome, navCalendar, navProfile;
+    private ImageView navHomeIcon, navCalendarIcon, navProfileIcon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Отключаем ночной режим, ставим глобальный обработчик крешей и инициализируем ThreeTenABP
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-
-        // Global crash handler
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) ->
                 Log.e("FATAL", "UNCAUGHT ERROR", throwable)
         );
-        com.jakewharton.threetenabp.AndroidThreeTen.init(this);
+        AndroidThreeTen.init(this);
 
         // Проверяем сессию
         userId = SessionManager.getLoggedInUserId(this);
@@ -54,16 +61,27 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        // Основной layout сразу отрисовываем
         setContentView(R.layout.activity_main);
 
-        // ViewModel
+        // Подготовка ViewModel
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
-        viewModel.initToday(userId);  // initTodayIfNotExists → UseCase
+        viewModel.getInitComplete().observe(this, isReady -> {
+            if (Boolean.TRUE.equals(isReady)) {
+                // Как только бэкенд-инициализация завершена, включаем навигацию и разрешения
+                setupNavigation();
+                requestNotificationPermissionIfNeeded();
+            }
+        });
 
-        // Навигационные кнопки
-        LinearLayout navHomeContainer     = findViewById(R.id.nav_home_container);
-        LinearLayout navCalendarContainer = findViewById(R.id.nav_calendar_container);
-        LinearLayout navProfileContainer  = findViewById(R.id.nav_profile_container);
+        // Запускаем инициализацию календаря/дня в фоновом потоке
+        viewModel.initForUser(userId);
+    }
+
+    private void setupNavigation() {
+        navHomeContainer     = findViewById(R.id.nav_home_container);
+        navCalendarContainer = findViewById(R.id.nav_calendar_container);
+        navProfileContainer  = findViewById(R.id.nav_profile_container);
 
         navHome     = findViewById(R.id.nav_home);
         navCalendar = findViewById(R.id.nav_calendar);
@@ -73,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
         navCalendarIcon = findViewById(R.id.nav_calendar_icon);
         navProfileIcon  = findViewById(R.id.nav_profile_icon);
 
-        // Стартовый фрагмент
+        // Задаём стартовый таб
         selectTab("home");
         loadFragment(new HomeFragment());
 
@@ -89,10 +107,7 @@ public class MainActivity extends AppCompatActivity {
             selectTab("profile");
             loadFragment(new ProfileFragment());
         });
-
-        requestNotificationPermissionIfNeeded();
     }
-
     private void selectTab(String tab) {
         int inactive = Color.parseColor("#888888");
         navHome.setTextColor(inactive);
@@ -117,6 +132,13 @@ public class MainActivity extends AppCompatActivity {
                 navProfileIcon.setImageResource(R.drawable.ic_profile_active);
                 break;
         }
+    }
+
+    private void loadFragment(Fragment fragment) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commit();
     }
 
     private void requestNotificationPermissionIfNeeded() {
@@ -158,12 +180,5 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Уведомления запрещены", Toast.LENGTH_SHORT).show();
             }
         }
-    }
-
-    private void loadFragment(Fragment fragment) {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.fragment_container, fragment)
-                .commit();
     }
 }

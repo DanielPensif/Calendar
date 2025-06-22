@@ -17,19 +17,59 @@ import androidx.room.PrimaryKey;
 )
 public class CalendarEntity {
     @PrimaryKey(autoGenerate = true)
-    public int id;
+    private int id;
 
-    public String title;
-    public long createdAt;
+    private String title;
+    private long createdAt;
 
-    public String colorHex;
+    private String colorHex;
 
-    public int userId;
+    private int userId;
 
     public CalendarEntity(String title, long createdAt, String colorHex, int userId) {
         this.title = title;
         this.createdAt = createdAt;
         this.colorHex = colorHex;
+        this.userId = userId;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public long getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(long createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public String getColorHex() {
+        return colorHex;
+    }
+
+    public void setColorHex(String colorHex) {
+        this.colorHex = colorHex;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
         this.userId = userId;
     }
 }

@@ -1,17 +1,20 @@
 package com.example.Kalendar.fragments;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import androidx.annotation.*;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.*;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.Kalendar.R;
 import com.example.Kalendar.adapters.HomeAdapter;
@@ -20,12 +23,16 @@ import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.viewmodel.HomeContent;
 import com.example.Kalendar.viewmodel.HomeViewModel;
 
-import org.threeten.bp.*;
+import org.threeten.bp.LocalDate;
+import org.threeten.bp.LocalTime;
 import org.threeten.bp.format.DateTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.Locale;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class HomeFragment extends Fragment {
     private ProgressBar quoteProgress;
     private Button btnNewQuote;
@@ -42,7 +49,6 @@ public class HomeFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-        // RecyclerView
         RecyclerView rv = view.findViewById(R.id.tasksRecyclerView);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
         homeAdapter = new HomeAdapter(
@@ -53,7 +59,6 @@ public class HomeFragment extends Fragment {
         );
         rv.setAdapter(homeAdapter);
 
-        // UI элементы
         textTime  = view.findViewById(R.id.textTime);
         textDayMonth = view.findViewById(R.id.textDayMonth);
         quoteProgress = view.findViewById(R.id.quoteProgress);
@@ -62,7 +67,6 @@ public class HomeFragment extends Fragment {
         textEmpty     = view.findViewById(R.id.textEmpty);
         textAllDone   = view.findViewById(R.id.textAllDone);
 
-        // Запуск таймера отображения времени
         timeUpdater = new Runnable() {
             @Override
             public void run() {
@@ -74,39 +78,31 @@ public class HomeFragment extends Fragment {
         };
         handler.post(timeUpdater);
 
-        btnNewQuote.setOnClickListener(v -> {
-            setQuoteLoading(true);
-            // Цитата фетчится прямо в VM
-            viewModel.getQuote().observe(getViewLifecycleOwner(), quote -> {
-                textQuote.setText(quote);
-                setQuoteLoading(false);
-            });
-        });
-
+        btnNewQuote.setOnClickListener(v -> viewModel.getQuote());
         return view;
     }
 
     @Override
-    public void onViewCreated(@NonNull View v, @Nullable Bundle b) {
-        super.onViewCreated(v, b);
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
-        // Подписываемся на контент «Домашней» страницы
+        // Загрузка домашнего контента
         viewModel.loadToday(SessionManager.getLoggedInUserId(requireContext()))
                 .observe(getViewLifecycleOwner(), this::renderHome);
 
-        // Подписываемся сразу на первую цитату
-        setQuoteLoading(true);
+        // Подписка на состояние загрузки цитаты
+        viewModel.isQuoteLoading().observe(getViewLifecycleOwner(), this::setQuoteLoading);
+
+        // Подписка на цитату
         viewModel.getQuote().observe(getViewLifecycleOwner(), quote -> {
             textQuote.setText(quote);
-            setQuoteLoading(false);
         });
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        // при каждом возвращении обновляем домашний контент
         viewModel.loadToday(SessionManager.getLoggedInUserId(requireContext()))
                 .observe(getViewLifecycleOwner(), this::renderHome);
     }
@@ -117,9 +113,9 @@ public class HomeFragment extends Fragment {
         handler.removeCallbacks(timeUpdater);
     }
 
-    @SuppressLint("NotifyDataSetChanged")
+    @SuppressWarnings("NotifyDataSetChanged")
     private void renderHome(HomeContent hc) {
-        homeAdapter.setItems(new java.util.ArrayList<HomeItem>() {{
+        homeAdapter.setItems(new ArrayList<HomeItem>() {{
             if (!hc.events.isEmpty()) {
                 add(new HomeItem.Header("События"));
                 for (var e : hc.events) add(new HomeItem.EventItem(e));
@@ -130,10 +126,10 @@ public class HomeFragment extends Fragment {
             }
         }});
 
-        textEmpty.setVisibility(hc.tasks.isEmpty() && hc.events.isEmpty()
-                ? View.VISIBLE : View.GONE);
-        textAllDone.setVisibility(hc.tasks.stream().allMatch(t -> t.done) && !hc.tasks.isEmpty()
-                ? View.VISIBLE : View.GONE);
+        textEmpty.setVisibility(hc.tasks.isEmpty() && hc.events.isEmpty() ?
+                View.VISIBLE : View.GONE);
+        textAllDone.setVisibility(hc.tasks.stream().allMatch(t -> t.done) && !hc.tasks.isEmpty() ?
+                View.VISIBLE : View.GONE);
 
         homeAdapter.notifyDataSetChanged();
     }
@@ -151,6 +147,14 @@ public class HomeFragment extends Fragment {
 
     private void setQuoteLoading(boolean isLoading) {
         quoteProgress.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-        btnNewQuote.setEnabled(!isLoading);
+        if (isLoading) {
+            textQuote.setVisibility(View.GONE);
+            btnNewQuote.setEnabled(false);
+        } else {
+            textQuote.setAlpha(0f);
+            textQuote.setVisibility(View.VISIBLE);
+            textQuote.animate().alpha(1f).setDuration(500).start();
+            btnNewQuote.setEnabled(true);
+        }
     }
 }

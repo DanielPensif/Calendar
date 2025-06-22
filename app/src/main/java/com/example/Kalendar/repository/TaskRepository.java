@@ -66,8 +66,8 @@ public class TaskRepository {
             List<DayEntity> days = dayDao.getByTimestamp(tsStart);
             List<TaskEntity> all = new ArrayList<>();
             for (DayEntity d : days) {
-                if (calendarId != -1 && d.calendarId != calendarId) continue;
-                all.addAll(taskDao.getTasksForDay(d.id));
+                if (calendarId != -1 && d.getCalendarId() != calendarId) continue;
+                all.addAll(taskDao.getTasksForDay(d.getId()));
             }
             // фильтруем по категории
             List<TaskEntity> filtered = new ArrayList<>();

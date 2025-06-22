@@ -36,22 +36,22 @@ public class DatabaseHelper {
         List<Integer> calIds = new ArrayList<>(cals.size());
         Map<Integer, String> calTitles = new HashMap<>();
         for (CalendarEntity c : cals) {
-            calIds.add(c.id);
-            calTitles.put(c.id, c.title);
+            calIds.add(c.getId());
+            calTitles.put(c.getId(), c.getTitle());
         }
 
         List<DayEntity> days = db.dayDao().getByCalendarIds(calIds);
 
         List<HistoryItem> items = new ArrayList<>();
         for (DayEntity day : days) {
-            int total = db.taskDao().getTotalTaskCountByDayId(day.id);
-            int done = db.taskDao().getCompletedTaskCountByDayId(day.id);
+            int total = db.taskDao().getTotalTaskCountByDayId(day.getId());
+            int done = db.taskDao().getCompletedTaskCountByDayId(day.getId());
 
             if (total > 0 && total == done) {
                 String dateFormatted = android.text.format.DateFormat
-                        .format("d MMM", day.timestamp).toString();
-                String calName = calTitles.get(day.calendarId);
-                items.add(new HistoryItem(dateFormatted, calName, day.timestamp, day.calendarId, day.awardType));
+                        .format("d MMM", day.getTimestamp()).toString();
+                String calName = calTitles.get(day.getCalendarId());
+                items.add(new HistoryItem(dateFormatted, calName, day.getTimestamp(), day.getCalendarId(), day.getAwardType()));
             }
         }
         return items;
@@ -64,9 +64,9 @@ public class DatabaseHelper {
 
         DayEntity day = db.dayDao().getById(dayId);
         if (day != null) {
-            CalendarEntity cal = db.calendarDao().getById(day.calendarId, userId);
-            if (cal != null && cal.userId == userId) {
-                day.awardType = awardType;
+            CalendarEntity cal = db.calendarDao().getById(day.getCalendarId(), userId);
+            if (cal != null && cal.getUserId() == userId) {
+                day.setAwardType(awardType);
                 db.dayDao().update(day);
             }
         }
@@ -75,7 +75,7 @@ public class DatabaseHelper {
     public static int getDayIdByTimestampAndCalendarId(Context context, long timestamp, int calendarId) {
         DayEntity day = getDatabase(context)
                 .dayDao().getByTimestampAndCalendarId(timestamp, calendarId);
-        return day != null ? day.id : -1;
+        return day != null ? day.getId() : -1;
     }
 
     public static Map<Pair<Long, Integer>, String> getAwardsForCompletedDays(Context context) {
@@ -86,18 +86,18 @@ public class DatabaseHelper {
 
         List<CalendarEntity> userCalendars = db.calendarDao().getByUserId(userId);
         List<Integer> calIds = new ArrayList<>();
-        for (CalendarEntity c : userCalendars) calIds.add(c.id);
+        for (CalendarEntity c : userCalendars) calIds.add(c.getId());
 
         List<DayEntity> days = db.dayDao().getByCalendarIds(calIds);
 
         Map<Pair<Long, Integer>, String> result = new HashMap<>();
         for (DayEntity day : days) {
-            if (day.awardType != null) {
-                int totalTasks = db.taskDao().getTotalTaskCountByDayId(day.id);
-                int doneTasks = db.taskDao().getCompletedTaskCountByDayId(day.id);
+            if (day.getAwardType() != null) {
+                int totalTasks = db.taskDao().getTotalTaskCountByDayId(day.getId());
+                int doneTasks = db.taskDao().getCompletedTaskCountByDayId(day.getId());
                 if (totalTasks > 0 && totalTasks == doneTasks) {
-                    Pair<Long, Integer> key = new Pair<>(day.timestamp, day.calendarId);
-                    result.put(key, day.awardType);
+                    Pair<Long, Integer> key = new Pair<>(day.getTimestamp(), day.getCalendarId());
+                    result.put(key, day.getAwardType());
                 }
             }
         }
@@ -116,7 +116,7 @@ public class DatabaseHelper {
         AppDatabase db = getDatabase(context);
         List<CalendarEntity> userCalendars = db.calendarDao().getByUserId(userId);
         List<Integer> calIds = new ArrayList<>();
-        for (CalendarEntity c : userCalendars) calIds.add(c.id);
+        for (CalendarEntity c : userCalendars) calIds.add(c.getId());
 
         List<DayEntity> allDays = db.dayDao().getDaysBetweenForCalendars(start, end, calIds);
         List<Integer> counts = new ArrayList<>();
@@ -126,7 +126,7 @@ public class DatabaseHelper {
             long dayEnd = dayStart + 86400000L;
             int count = 0;
             for (DayEntity day : allDays) {
-                if (day.timestamp >= dayStart && day.timestamp < dayEnd) {
+                if (day.getTimestamp() >= dayStart && day.getTimestamp() < dayEnd) {
                     count++;
                 }
             }
@@ -147,7 +147,7 @@ public class DatabaseHelper {
         AppDatabase db = getDatabase(context);
         List<CalendarEntity> userCalendars = db.calendarDao().getByUserId(userId);
         List<Integer> calIds = new ArrayList<>();
-        for (CalendarEntity c : userCalendars) calIds.add(c.id);
+        for (CalendarEntity c : userCalendars) calIds.add(c.getId());
 
         List<DayEntity> allDays = db.dayDao().getDaysBetweenForCalendars(start, end, calIds);
 
@@ -162,9 +162,9 @@ public class DatabaseHelper {
             int uncompletedSum = 0;
 
             for (DayEntity day : allDays) {
-                if (day.timestamp >= dayStart && day.timestamp < dayEnd) {
-                    int total = db.taskDao().getTotalTaskCountByDayId(day.id);
-                    int done = db.taskDao().getCompletedTaskCountByDayId(day.id);
+                if (day.getTimestamp() >= dayStart && day.getTimestamp() < dayEnd) {
+                    int total = db.taskDao().getTotalTaskCountByDayId(day.getId());
+                    int done = db.taskDao().getCompletedTaskCountByDayId(day.getId());
                     completedSum += done;
                     uncompletedSum += (total - done);
                 }
@@ -198,7 +198,7 @@ public class DatabaseHelper {
         AppDatabase db = getDatabase(context);
         List<CalendarEntity> userCalendars = db.calendarDao().getByUserId(userId);
         List<Integer> calIds = new ArrayList<>();
-        for (CalendarEntity c : userCalendars) calIds.add(c.id);
+        for (CalendarEntity c : userCalendars) calIds.add(c.getId());
 
         List<DayEntity> allDays = db.dayDao().getDaysBetweenForCalendars(start, end, calIds);
 
@@ -212,8 +212,8 @@ public class DatabaseHelper {
             int completedTasks = 0;
 
             for (DayEntity day : allDays) {
-                if (day.timestamp >= dayStart && day.timestamp <= dayEnd) {
-                    List<TaskEntity> tasks = db.taskDao().getTasksByDayId(day.id);
+                if (day.getTimestamp() >= dayStart && day.getTimestamp() <= dayEnd) {
+                    List<TaskEntity> tasks = db.taskDao().getTasksByDayId(day.getId());
                     allTasks += tasks.size();
                     for (TaskEntity t : tasks) {
                         if (t.done) completedTasks++;
@@ -237,8 +237,8 @@ public class DatabaseHelper {
             DayEntity day = db.dayDao().getById(dayId);
             if (day == null) return;
 
-            CalendarEntity cal = db.calendarDao().getById(day.calendarId, userId);
-            if (cal == null || cal.userId != userId) return;
+            CalendarEntity cal = db.calendarDao().getById(day.getCalendarId(), userId);
+            if (cal == null || cal.getUserId() != userId) return;
 
             List<TaskEntity> tasks = db.taskDao().getTasksByDayId(dayId);
 
@@ -250,8 +250,8 @@ public class DatabaseHelper {
                 }
             }
 
-            if (!allDone && day.awardType != null) {
-                day.awardType = null;
+            if (!allDone && day.getAwardType() != null) {
+                day.setAwardType(null);
                 db.dayDao().update(day);
             }
 

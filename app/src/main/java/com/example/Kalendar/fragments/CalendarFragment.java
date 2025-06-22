@@ -1,19 +1,25 @@
-
 package com.example.Kalendar.fragments;
 
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.NumberPicker;
+import android.widget.PopupMenu;
+import android.widget.Spinner;
+import android.widget.TextView;
 
-import android.os.*;
-
-import android.view.*;
-import android.widget.*;
-import androidx.annotation.*;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.Kalendar.CalendarManagerActivity;
 import com.example.Kalendar.DayDetailsActivity;
 import com.example.Kalendar.R;
@@ -26,17 +32,24 @@ import com.example.Kalendar.viewmodel.CalendarViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.threeten.bp.LocalDate;
-import java.util.*;
 
+import java.util.List;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class CalendarFragment extends Fragment {
     private CalendarViewModel viewModel;
     private RecyclerView calendarGrid;
     private Spinner calendarSelector;
     private TextView monthTitle, streakText, quoteOfDay;
     private FloatingActionButton fab;
-    final String[] months = {
-            "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-            "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+    private LocalDate currentDate = LocalDate.now();
+    private int currentCalendarId = -1;
+
+    private static final String[] months = {
+            "Январь","Февраль","Март","Апрель","Май","Июнь",
+            "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"
     };
     private static final String[] QUOTES = {
             "Каждый день — это шанс начать заново.",
@@ -46,27 +59,21 @@ public class CalendarFragment extends Fragment {
             "Твоя цель — не быть лучше других, а быть лучше вчерашнего себя."
     };
 
-    // сохраняем текущее состояние UI
-    private LocalDate currentDate = LocalDate.now();
-    private int currentCalendarId = -1;
-
-    @Nullable @Override
-    public View onCreateView(
-            @NonNull LayoutInflater inf,
-            @Nullable ViewGroup container,
-            @Nullable Bundle saved
-    ) {
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inf,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle saved) {
         View v = inf.inflate(R.layout.fragment_calendar, container, false);
         viewModel = new ViewModelProvider(this).get(CalendarViewModel.class);
 
-        monthTitle      = v.findViewById(R.id.monthTitle);
-        calendarGrid    = v.findViewById(R.id.recycler_view);
-        calendarSelector= v.findViewById(R.id.calendarSelector);
-        streakText      = v.findViewById(R.id.streakText);
-        quoteOfDay      = v.findViewById(R.id.quoteOfDay);
-        fab             = v.findViewById(R.id.FloatingActionButton);
+        monthTitle       = v.findViewById(R.id.monthTitle);
+        calendarGrid     = v.findViewById(R.id.recycler_view);
+        calendarSelector = v.findViewById(R.id.calendarSelector);
+        streakText       = v.findViewById(R.id.streakText);
+        quoteOfDay       = v.findViewById(R.id.quoteOfDay);
+        fab              = v.findViewById(R.id.FloatingActionButton);
 
-        // month navigation
         monthTitle.setOnClickListener(x -> showMonthYearDialog());
         v.findViewById(R.id.prevMonthBtn).setOnClickListener(x -> {
             currentDate = currentDate.minusMonths(1);
@@ -79,29 +86,23 @@ public class CalendarFragment extends Fragment {
             reload();
         });
 
-        quoteOfDay.setText(QUOTES[new Random().nextInt(QUOTES.length)]);
+        quoteOfDay.setText(QUOTES[new java.util.Random().nextInt(QUOTES.length)]);
+        streakText.setOnClickListener(x -> new AlertDialog.Builder(requireContext())
+                .setView(R.layout.dialog_streak_info)
+                .create().show());
 
-        // streak info dialog
-        streakText.setOnClickListener(x->{
-            AlertDialog dlg = new AlertDialog.Builder(requireContext())
-                    .setView(R.layout.dialog_streak_info).create();
-            dlg.show();
-        });
-
-        // spinner
-        calendarGrid.setLayoutManager(new GridLayoutManager(requireContext(),7));
+        calendarGrid.setLayoutManager(new GridLayoutManager(requireContext(), 7));
         calendarSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p,View w,int pos,long id){
-                currentCalendarId = ((CalendarEntity)
-                        calendarSelector.getItemAtPosition(pos)).id;
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+                CalendarEntity sel = (CalendarEntity) parent.getItemAtPosition(pos);
+                currentCalendarId = (sel != null ? sel.getId() : -1);
                 reload();
             }
-            @Override public void onNothingSelected(AdapterView<?> p){}
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        // fab
-        fab.setOnClickListener(a-> showFabMenu(a));
-
+        fab.setOnClickListener(a -> showFabMenu(a));
         updateMonthTitle();
         reload();
         return v;
@@ -113,14 +114,25 @@ public class CalendarFragment extends Fragment {
                 .observe(getViewLifecycleOwner(), this::render);
     }
 
+    @SuppressWarnings("NotifyDataSetChanged")
     private void render(CalendarContent cc) {
-        // spinner
+        // Устанавливаем адаптер со списком календарей
         calendarSelector.setAdapter(
                 new CalendarSpinnerAdapter(requireContext(), cc.allCalendars)
         );
-        // month title (in case reused)
+        // Восстанавливаем выбранный элемент
+        List<CalendarEntity> list = cc.allCalendars;
+        int selIndex = 0;
+        for (int i = 0; i < list.size(); i++) {
+            CalendarEntity cal = list.get(i);
+            if (cal != null && cal.getId() == cc.currentCalendarId) {
+                selIndex = i;
+                break;
+            }
+        }
+        calendarSelector.setSelection(selIndex, false);
+
         updateMonthTitle();
-        // grid
         calendarGrid.setAdapter(new CalendarGridAdapter(
                 cc.daysInMonth,
                 cc.activeDayCalendars,
@@ -130,50 +142,38 @@ public class CalendarFragment extends Fragment {
                 cc.awardsMap,
                 cc.currentCalendarId
         ));
-        // streak text
-        streakText.setText("🔥 Стрик: " + cc.streak +
-                " " + pluralize(cc.streak));
+        streakText.setText("🔥 Стрик: " + cc.streak + " " + pluralize(cc.streak));
     }
 
-    private void updateMonthTitle(){
-        monthTitle.setText(months[currentDate.getMonthValue() - 1] + " " + currentDate.getYear());
+    private void updateMonthTitle() {
+        monthTitle.setText(months[currentDate.getMonthValue()-1] + " " + currentDate.getYear());
     }
 
     private void showMonthYearDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Выбор месяца и года");
-
-        // Инфлейтим кастомный layout
         View dialogView = LayoutInflater.from(requireContext())
                 .inflate(R.layout.dialog_month_year_picker, null);
         builder.setView(dialogView);
 
         NumberPicker monthPicker = dialogView.findViewById(R.id.monthPicker);
         NumberPicker yearPicker  = dialogView.findViewById(R.id.yearPicker);
-
-        // Настраиваем NumberPicker для месяцев
         monthPicker.setMinValue(1);
         monthPicker.setMaxValue(12);
         monthPicker.setDisplayedValues(months);
         monthPicker.setValue(currentDate.getMonthValue());
-
-        // Настраиваем NumberPicker для лет (текущий год ±20)
         int thisYear = LocalDate.now().getYear();
         yearPicker.setMinValue(thisYear - 20);
         yearPicker.setMaxValue(thisYear + 20);
         yearPicker.setValue(currentDate.getYear());
 
         builder.setPositiveButton("Выбрать", (dialog, which) -> {
-            // При выборе забираем значения
-            int year  = yearPicker .getValue();
+            int year  = yearPicker.getValue();
             int month = monthPicker.getValue();
-            // Устанавливаем первый день выбранного месяца
             currentDate = LocalDate.of(year, month, 1);
-            // Обновляем заголовок и перезагружаем контент
             updateMonthTitle();
             reload();
         });
-
         builder.setNegativeButton("Отмена", null);
         builder.show();
     }
@@ -193,12 +193,15 @@ public class CalendarFragment extends Fragment {
     }
 
     private void showDayPickerDialog() {
-        new DatePickerDialog(requireContext(), (dp,y,m,d)->{
-            Intent i=new Intent(requireContext(),DayDetailsActivity.class);
-            i.putExtra("date", LocalDate.of(y,m+1,d).toString());
+        new DatePickerDialog(requireContext(), (dp, y, m, d) -> {
+            Intent i = new Intent(requireContext(), DayDetailsActivity.class);
+            i.putExtra("date", LocalDate.of(y, m+1, d).toString());
             i.putExtra("calendarId", currentCalendarId);
             startActivity(i);
-        }, currentDate.getYear(), currentDate.getMonthValue()-1, currentDate.getDayOfMonth())
+        },
+                currentDate.getYear(),
+                currentDate.getMonthValue()-1,
+                currentDate.getDayOfMonth())
                 .show();
     }
 
@@ -212,7 +215,7 @@ public class CalendarFragment extends Fragment {
     private String pluralize(int c) {
         int m10=c%10, m100=c%100;
         if (m10==1 && m100!=11) return "день";
-        if (m10>=2&&m10<=4 && (m100<10||m100>=20)) return "дня";
+        if (m10>=2 && m10<=4 && (m100<10||m100>=20)) return "дня";
         return "дней";
     }
 }

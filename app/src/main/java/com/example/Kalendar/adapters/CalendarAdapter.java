@@ -26,7 +26,6 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.ViewHo
         this.onDelete = onDelete;
     }
 
-    /** Позволяет обновить данные извне */
     @SuppressLint("NotifyDataSetChanged")
     public void setItems(List<CalendarEntity> newList) {
         list.clear();
@@ -61,8 +60,8 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.ViewHo
             deleteBtn    = itemView.findViewById(R.id.deleteBtn);
         }
         void bind(CalendarEntity cal) {
-            title.setText(cal.title);
-            colorPreview.setBackgroundColor(Color.parseColor(cal.colorHex));
+            title.setText(cal.getTitle());
+            colorPreview.setBackgroundColor(Color.parseColor(cal.getColorHex()));
 
             editBtn.setOnClickListener(v -> onEdit.accept(cal));
             deleteBtn.setOnClickListener(v -> onDelete.accept(cal));

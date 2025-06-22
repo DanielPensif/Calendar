@@ -28,6 +28,9 @@ import org.threeten.bp.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class CompleteTaskDialogFragment extends DialogFragment {
 
     private static final String ARG_TASK_ID = "task_id";

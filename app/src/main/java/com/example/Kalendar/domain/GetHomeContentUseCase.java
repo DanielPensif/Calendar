@@ -45,7 +45,7 @@ public class GetHomeContentUseCase {
             // 1. Список календарей
             List<Integer> cIds = new ArrayList<>();
             for (CalendarEntity c : calRepo.getByUserIdSync(userId)) {
-                cIds.add(c.id);
+                cIds.add(c.getId());
             }
 
             // 2. Сегодняшний ts
@@ -63,12 +63,12 @@ public class GetHomeContentUseCase {
 
             // 4. Собираем по дню создания
             for (DayEntity day : days) {
-                tasks.addAll(db.taskDao().getTasksForDay(day.id));
-                for (EventEntity e : db.eventDao().getEventsForDay(day.id)) {
+                tasks.addAll(db.taskDao().getTasksForDay(day.getId()));
+                for (EventEntity e : db.eventDao().getEventsForDay(day.getId())) {
                     boolean occurs = (e.repeatRule == null || e.repeatRule.isEmpty())
                             || EventUtils.occursOnDate(e,
                             LocalDate.now(),
-                            Instant.ofEpochMilli(day.timestamp)
+                            Instant.ofEpochMilli(day.getTimestamp())
                                     .atZone(ZoneId.systemDefault())
                                     .toLocalDate());
                     if (occurs) {
@@ -85,7 +85,7 @@ public class GetHomeContentUseCase {
                 if (seen.contains(e.id) || e.repeatRule == null || e.repeatRule.isEmpty()) continue;
                 DayEntity base = db.dayDao().getById(e.dayId);
                 if (base == null) continue;
-                LocalDate start = Instant.ofEpochMilli(base.timestamp)
+                LocalDate start = Instant.ofEpochMilli(base.getTimestamp())
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate();
                 if (EventUtils.occursOnDate(e, today, start)) {

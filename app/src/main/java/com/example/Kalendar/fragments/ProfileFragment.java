@@ -73,12 +73,12 @@ public class ProfileFragment extends Fragment {
         vm.user.observe(getViewLifecycleOwner(), user -> {
             if (user == null) return;
             currentUser = user;
-            profileName.setText(user.name != null && !user.name.isEmpty() ? user.name : "Имя");
-            profileNickname.setText("@" + user.username);
-            profileDescription.setText(user.description != null && !user.description.isEmpty()
-                    ? user.description : "Описание профиля");
-            if (user.photoUri != null && !user.photoUri.isEmpty()) {
-                File f = new File(user.photoUri);
+            profileName.setText(user.getName() != null && !user.getName().isEmpty() ? user.getName() : "Имя");
+            profileNickname.setText("@" + user.getUsername());
+            profileDescription.setText(user.getDescription() != null && !user.getDescription().isEmpty()
+                    ? user.getDescription() : "Описание профиля");
+            if (user.getPhotoUri() != null && !user.getPhotoUri().isEmpty()) {
+                File f = new File(user.getPhotoUri());
                 if (f.exists()) {
                     Glide.with(this)
                             .load(f)

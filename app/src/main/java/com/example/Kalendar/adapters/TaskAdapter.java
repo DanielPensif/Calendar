@@ -117,7 +117,7 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 new Thread(() -> {
                     AppDatabase db = AppDatabase.getDatabase(v.getContext());
                     TasksFragment frag = (TasksFragment)((AppCompatActivity)ctx).getSupportFragmentManager().findFragmentByTag("f0");
-                    long ts = db.dayDao().getById(t.dayId).timestamp;
+                    long ts = db.dayDao().getById(t.dayId).getTimestamp();
                     LocalDate d = Instant.ofEpochMilli(ts)
                             .atZone(ZoneId.systemDefault())
                             .toLocalDate();

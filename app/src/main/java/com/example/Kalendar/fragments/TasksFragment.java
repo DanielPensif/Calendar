@@ -1,7 +1,9 @@
 package com.example.Kalendar.fragments;
 
 import android.os.Bundle;
-import android.view.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Spinner;
 
@@ -13,8 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.Kalendar.R;
 import com.example.Kalendar.adapters.TaskAdapter;
-import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.adapters.CategorySpinnerAdapter;
+import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.models.CategoryEntity;
 import com.example.Kalendar.viewmodel.TasksViewModel;
 
@@ -23,14 +25,17 @@ import org.threeten.bp.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class TasksFragment extends Fragment {
     private static final String ARG_DATE = "date";
 
     public static TasksFragment newInstance(LocalDate date) {
         TasksFragment f = new TasksFragment();
-        Bundle b = new Bundle();
-        b.putString(ARG_DATE, date.toString());
-        f.setArguments(b);
+        Bundle args = new Bundle();
+        args.putString(ARG_DATE, date.toString());
+        f.setArguments(args);
         return f;
     }
 
@@ -41,8 +46,8 @@ public class TasksFragment extends Fragment {
     private final List<CategoryEntity> categories = new ArrayList<>();
 
     @Nullable @Override
-    public View onCreateView(@NonNull LayoutInflater inf, @Nullable ViewGroup ct, @Nullable Bundle bs) {
-        View v = inf.inflate(R.layout.fragment_tasks, ct, false);
+    public View onCreateView(@NonNull LayoutInflater inf, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View v = inf.inflate(R.layout.fragment_tasks, container, false);
 
         // RecyclerView
         RecyclerView rv = v.findViewById(R.id.tasksRecycler);
@@ -53,17 +58,18 @@ public class TasksFragment extends Fragment {
         // Spinner категорий
         spCategory = v.findViewById(R.id.categoryFilter);
         catAdapter = new CategorySpinnerAdapter(
-                requireContext(), categories,
-                null, // передаём null в db, потому что CategorySpinnerAdapter перезагрузит сама
+                requireContext(),
+                categories,
+                null,
                 SessionManager.getLoggedInUserId(requireContext()),
                 () -> catAdapter.notifyDataSetChanged()
         );
         spCategory.setAdapter(catAdapter);
         spCategory.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View w, int pos, long id) {
-                vm.setCategory(p.getItemAtPosition(pos).toString());
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+                vm.setCategory(parent.getItemAtPosition(pos).toString());
             }
-            @Override public void onNothingSelected(AdapterView<?> p){}
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
         });
 
         // ViewModel
@@ -73,16 +79,13 @@ public class TasksFragment extends Fragment {
         vm.setCalendarId(-1);
         vm.setCategory("Все");
 
-        // наблюдаем
-        vm.tasks.observe(getViewLifecycleOwner(), list -> {
-            adapter.setItems(list);
-        });
+        // Наблюдаем задачи
+        vm.tasks.observe(getViewLifecycleOwner(), list -> adapter.setItems(list));
 
         return v;
     }
 
     private void onTasksChanged() {
-        // просто перезапрос
         vm.setDate(vm.getDate());
     }
 

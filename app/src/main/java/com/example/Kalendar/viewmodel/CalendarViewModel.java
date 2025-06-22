@@ -32,7 +32,6 @@ public class CalendarViewModel extends ViewModel {
         );
     }
 
-    /** Загрузка данных (выбор календаря/месяца) */
     public LiveData<CalendarContent> loadCalendar(int userId, int calendarId, LocalDate monthStart) {
         return uc.execute(userId, calendarId, monthStart);
     }

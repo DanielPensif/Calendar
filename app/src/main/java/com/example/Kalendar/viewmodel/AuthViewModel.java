@@ -1,67 +1,89 @@
 package com.example.Kalendar.viewmodel;
 
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
-import com.example.Kalendar.models.UserEntity;
-import com.example.Kalendar.domain.ValidateUserUseCase;
+
 import com.example.Kalendar.domain.RegisterUserUseCase;
+import com.example.Kalendar.domain.ValidateUserUseCase;
+import com.example.Kalendar.models.UserEntity;
 import com.example.Kalendar.utils.PasswordUtils;
-import dagger.hilt.android.lifecycle.HiltViewModel;
+
+import java.util.concurrent.Executor;
+
 import javax.inject.Inject;
+
+import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class AuthViewModel extends ViewModel {
+
     private final ValidateUserUseCase validateUseCase;
     private final RegisterUserUseCase registerUseCase;
+    private final Executor ioExecutor;
 
-    private final MutableLiveData<LoginParams> loginParams = new MutableLiveData<>();
-    public final LiveData<UserEntity> loginResult;
+    private final MutableLiveData<UserEntity> _loginResult   = new MutableLiveData<>();
+    public  final LiveData<UserEntity>     loginResult      = _loginResult;
 
-    private final MutableLiveData<RegisterParams> registerParams = new MutableLiveData<>();
-    public final LiveData<Boolean> registerResult;
+    private final MutableLiveData<Boolean> _registerResult = new MutableLiveData<>();
+    public  final LiveData<Boolean>        registerResult  = _registerResult;
 
-    public final MediatorLiveData<String> error = new MediatorLiveData<>();
+    private final MutableLiveData<String>  _error          = new MutableLiveData<>();
+    public  final LiveData<String>         error           = _error;
 
     @Inject
-    public AuthViewModel(ValidateUserUseCase v, RegisterUserUseCase r) {
-        this.validateUseCase = v;
-        this.registerUseCase = r;
+    public AuthViewModel(
+            ValidateUserUseCase validateUseCase,
+            RegisterUserUseCase registerUseCase,
+            Executor ioExecutor
+    ) {
+        this.validateUseCase = validateUseCase;
+        this.registerUseCase = registerUseCase;
+        this.ioExecutor      = ioExecutor;
+    }
 
-        loginResult = Transformations.switchMap(loginParams, p -> {
-            if (p.login.isEmpty() || p.password.isEmpty()) {
-                error.postValue("Введите логин и пароль");
-                return new MutableLiveData<>();
+    public void login(String username, String password) {
+        ioExecutor.execute(() -> {
+            if (username == null || username.isEmpty() ||
+                    password == null || password.isEmpty()) {
+                _error.postValue("Введите логин и пароль");
+                return;
             }
-            return validateUseCase.execute(p.login, PasswordUtils.hash(p.password));
+
+            String hash = PasswordUtils.hash(password);
+            UserEntity user = validateUseCase.execute(username, hash);
+
+            if (user != null) {
+                _loginResult.postValue(user);
+            } else {
+                _error.postValue("Неверный логин или пароль");
+            }
         });
+    }
 
-        registerResult = Transformations.switchMap(registerParams, p -> {
-            if (p.login.isEmpty() || p.password.isEmpty() || p.repeatPassword.isEmpty()) {
-                error.postValue("Заполните все поля");
-                return new MutableLiveData<>();
+    public void register(String username, String password, String repeatPassword) {
+        ioExecutor.execute(() -> {
+            if (username == null || username.isEmpty() ||
+                    password == null || password.isEmpty() ||
+                    repeatPassword == null || repeatPassword.isEmpty()) {
+                _error.postValue("Заполните все поля");
+                return;
             }
-            if (!p.password.equals(p.repeatPassword)) {
-                error.postValue("Пароли не совпадают");
-                return new MutableLiveData<>();
+            if (!password.equals(repeatPassword)) {
+                _error.postValue("Пароли не совпадают");
+                return;
             }
-            UserEntity u = new UserEntity();
-            u.username = p.login;
-            u.passwordHash = PasswordUtils.hash(p.password);
-            return registerUseCase.execute(u);
+
+            UserEntity newUser = new UserEntity();
+            newUser.setUsername(username);
+            newUser.setPasswordHash(PasswordUtils.hash(password));
+
+            boolean success = registerUseCase.execute(newUser);
+            if (success) {
+                _registerResult.postValue(true);
+            } else {
+                _error.postValue("Пользователь с таким логином уже существует");
+            }
         });
     }
-
-    public void login(String login, String password) {
-        loginParams.postValue(new LoginParams(login, password));
-    }
-
-    public void register(String login, String password, String repeatPassword) {
-        registerParams.postValue(new RegisterParams(login, password, repeatPassword));
-    }
-
-    private static class LoginParams { final String login, password; LoginParams(String l, String p) { login = l; password = p; }}
-    private static class RegisterParams { final String login, password, repeatPassword; RegisterParams(String l, String p, String r) { login = l; password = p; repeatPassword = r; }}
 }

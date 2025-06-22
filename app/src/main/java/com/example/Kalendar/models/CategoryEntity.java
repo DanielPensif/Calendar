@@ -7,19 +7,53 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "categories")
 public class CategoryEntity {
     @PrimaryKey(autoGenerate = true)
-    public int id;
+    private int id;
 
     @NonNull
-    public String name;
+    private String name;
 
     @NonNull
-    public String color; // Hex, e.g. "#FF5722"
+    private String color; // Hex, e.g. "#FF5722"
 
-    public int userId;
+    private int userId;
 
     public CategoryEntity(@NonNull String name, @NonNull String color, int userId) {
         this.name = name;
         this.color = color;
+        this.userId = userId;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    @NonNull
+    public String getName() {
+        return name;
+    }
+
+    public void setName(@NonNull String name) {
+        this.name = name;
+    }
+
+    @NonNull
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(@NonNull String color) {
+        this.color = color;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
         this.userId = userId;
     }
 }

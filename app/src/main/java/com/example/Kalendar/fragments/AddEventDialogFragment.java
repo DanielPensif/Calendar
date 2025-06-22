@@ -27,6 +27,9 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class AddEventDialogFragment extends BottomSheetDialogFragment {
     private static final String ARG_DATE="date", ARG_EDIT="editEventId";
     private LocalDate date;
@@ -122,7 +125,7 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
                 calA.notifyDataSetChanged();
                 if(preCal!=null){
                     for(int i=0;i<cals.size();i++)
-                        if(cals.get(i).id==preCal)spCal.setSelection(i);
+                        if(cals.get(i).getId()==preCal)spCal.setSelection(i);
                 }
             });
         }).start();
@@ -165,8 +168,8 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
                 cbAllDay.setChecked(e.allDay);
                 selStart=e.timeStart; bStart.setText("Начало: "+selStart);
                 selEnd=e.timeEnd; bEnd.setText("Конец: "+selEnd);
-                for(int i=0;i<cats.size();i++) if(cats.get(i).name.equals(e.category))spCat.setSelection(i);
-                for(int i=0;i<cals.size();i++) if(cals.get(i).id==e.calendarId)spCal.setSelection(i);
+                for(int i=0;i<cats.size();i++) if(cats.get(i).getName().equals(e.category))spCat.setSelection(i);
+                for(int i=0;i<cals.size();i++) if(cals.get(i).getId()==e.calendarId)spCal.setSelection(i);
                 cbEarly.setChecked(e.earlyReminderEnabled);
                 tpEarly.setHour(e.earlyReminderHour);
                 tpEarly.setMinute(e.earlyReminderMinute);
@@ -195,7 +198,7 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
             }
         }
         CategoryEntity cat=(CategoryEntity)spCat.getSelectedItem();
-        int calId=cals.get(spCal.getSelectedItemPosition()).id;
+        int calId=cals.get(spCal.getSelectedItemPosition()).getId();
         boolean early=cbEarly.isChecked();
         int eh=tpEarly.getHour(), em=tpEarly.getMinute();
         boolean notify=cbNotify.isChecked();
@@ -207,9 +210,9 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
             DayEntity day=db.dayDao().getByTimestampAndCalendarId(ts,calId);
             if(day==null){
                 day=new DayEntity();
-                day.timestamp=ts;
-                day.calendarId=calId;
-                day.id=(int)db.dayDao().insert(day);
+                day.setTimestamp(ts);;
+                day.setCalendarId(calId);
+                day.setId((int)db.dayDao().insert(day));
             }
             boolean isEdit = editingId!=null;
             EventEntity e = isEdit
@@ -221,13 +224,13 @@ public class AddEventDialogFragment extends BottomSheetDialogFragment {
             e.timeStart=all?"00:00":selStart;
             e.timeEnd=all?"23:59":selEnd;
             e.allDay=all;
-            e.category=cat.name;
+            e.category=cat.getName();
             e.calendarId=calId;
             e.repeatRule=rule;
             e.earlyReminderEnabled=early;
             e.earlyReminderHour=eh; e.earlyReminderMinute=em;
             e.notifyOnStart=notify;
-            e.dayId=day.id;
+            e.dayId=day.getId();
             e.userId=userId;
             if(!exdates.isEmpty()){
                 e.excludedDates=exdates.stream()

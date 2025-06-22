@@ -69,7 +69,7 @@ public class EventViewHolder extends RecyclerView.ViewHolder {
             if (date == null) {
                 DayEntity day = db.dayDao().getById(actual.dayId);
                 if (day != null) {
-                    date = Instant.ofEpochMilli(day.timestamp)
+                    date = Instant.ofEpochMilli(day.getTimestamp())
                             .atZone(ZoneId.systemDefault()).toLocalDate();
                 }
             }

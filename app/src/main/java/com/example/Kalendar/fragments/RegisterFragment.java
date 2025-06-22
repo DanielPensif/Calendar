@@ -16,6 +16,9 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.example.Kalendar.viewmodel.AuthViewModel;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class RegisterFragment extends Fragment {
     public interface OnRegisterSuccessListener { void onRegisterSuccess(); }
     private OnRegisterSuccessListener listener;

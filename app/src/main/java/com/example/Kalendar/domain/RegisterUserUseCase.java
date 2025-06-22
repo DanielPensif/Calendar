@@ -1,24 +1,33 @@
 package com.example.Kalendar.domain;
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 import com.example.Kalendar.models.UserEntity;
 import com.example.Kalendar.repository.UserRepository;
-import dagger.hilt.android.scopes.ViewModelScoped;
+
 import javax.inject.Inject;
+
+import dagger.hilt.android.scopes.ViewModelScoped;
 
 @ViewModelScoped
 public class RegisterUserUseCase {
-    private final UserRepository repo;
+    private final UserRepository userRepo;
 
     @Inject
-    public RegisterUserUseCase(UserRepository repo) {
-        this.repo = repo;
+    public RegisterUserUseCase(UserRepository userRepo) {
+        this.userRepo = userRepo;
     }
-    public LiveData<Boolean> execute(UserEntity user) {
-        MutableLiveData<Boolean> result = new MutableLiveData<>();
-        repo.insert(user);
-        result.postValue(true);
-        return result;
+
+    public boolean execute(UserEntity newUser) {
+        // 1) Не даём зарегистрировать дубль
+        if (userRepo.getByUsernameSync(newUser.getUsername()) != null) {
+            return false;
+        }
+
+        // 2) Вставляем и возвращаем результат
+        try {
+            long rowId = userRepo.insertSync(newUser);
+            return rowId > 0;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

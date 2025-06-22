@@ -1,9 +1,9 @@
 package com.example.Kalendar.viewmodel;
 
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
+import androidx.lifecycle.ViewModel;
 
 import com.example.Kalendar.domain.CreateCalendarUseCase;
 import com.example.Kalendar.domain.DeleteCalendarUseCase;
@@ -19,14 +19,15 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class CalendarManagerViewModel extends ViewModel {
+    // LiveData для списка календарей
     public final LiveData<List<CalendarEntity>> calendars;
 
-    private final LoadCalendarsUseCase loadCalendarsUseCase;
     private final CreateCalendarUseCase createCalendarUseCase;
     private final UpdateCalendarUseCase updateCalendarUseCase;
     private final DeleteCalendarUseCase deleteCalendarUseCase;
 
     private final MutableLiveData<Integer> userIdParam = new MutableLiveData<>();
+    private int currentUserId = -1;
 
     @Inject
     public CalendarManagerViewModel(
@@ -35,27 +36,40 @@ public class CalendarManagerViewModel extends ViewModel {
             UpdateCalendarUseCase updateCalendarUseCase,
             DeleteCalendarUseCase deleteCalendarUseCase
     ) {
-        this.loadCalendarsUseCase = loadCalendarsUseCase;
         this.createCalendarUseCase = createCalendarUseCase;
         this.updateCalendarUseCase = updateCalendarUseCase;
         this.deleteCalendarUseCase = deleteCalendarUseCase;
 
-        // Перезагружаем список календарей при смене userIdParam
-        this.calendars = Transformations.switchMap(userIdParam, loadCalendarsUseCase::execute);
+        // Перезагружаем список при изменении userIdParam
+        this.calendars = Transformations.switchMap(
+                userIdParam,
+                loadCalendarsUseCase::execute
+        );
     }
 
-    public void setUserId(int userId) {
+    public void init(int userId) {
+        currentUserId = userId;
         userIdParam.setValue(userId);
     }
-    public void createCalendar(CalendarEntity e) {
-        new Thread(() -> createCalendarUseCase.execute(e)).start();
-        setUserId(userIdParam.getValue());
+
+    public void createCalendar(CalendarEntity entity) {
+        new Thread(() -> {
+            createCalendarUseCase.execute(entity);
+            userIdParam.postValue(currentUserId);
+        }).start();
     }
-    public void updateCalendar(CalendarEntity e) {
-        new Thread(() -> updateCalendarUseCase.execute(e)).start();
+
+    public void updateCalendar(CalendarEntity entity) {
+        new Thread(() -> {
+            updateCalendarUseCase.execute(entity);
+            userIdParam.postValue(currentUserId);
+        }).start();
     }
-    public void deleteCalendar(CalendarEntity e) {
-        new Thread(() -> deleteCalendarUseCase.execute(e)).start();
-        setUserId(userIdParam.getValue());
+
+    public void deleteCalendar(CalendarEntity entity) {
+        new Thread(() -> {
+            deleteCalendarUseCase.execute(entity);
+            userIdParam.postValue(currentUserId);
+        }).start();
     }
 }

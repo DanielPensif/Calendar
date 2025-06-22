@@ -13,6 +13,9 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import dagger.hilt.android.lifecycle.HiltViewModel;
+
+@HiltViewModel
 public class DayDetailsViewModel extends ViewModel {
     private LoadDayContentUseCase uc;
     private final MutableLiveData<Params> trigger = new MutableLiveData<>();

@@ -114,7 +114,7 @@ public class TaskViewHolder extends RecyclerView.ViewHolder {
             DayEntity day = db.dayDao().getById(task.dayId);
             if (day == null) return;
 
-            LocalDate date = Instant.ofEpochMilli(day.timestamp)
+            LocalDate date = Instant.ofEpochMilli(day.getTimestamp())
                     .atZone(ZoneId.systemDefault()).toLocalDate();
 
             ((AppCompatActivity) context).runOnUiThread(() -> {

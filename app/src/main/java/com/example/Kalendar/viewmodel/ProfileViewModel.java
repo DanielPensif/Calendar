@@ -10,21 +10,23 @@ import com.example.Kalendar.domain.UpdateUserUseCase;
 import com.example.Kalendar.models.UserEntity;
 
 import javax.inject.Inject;
+
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class ProfileViewModel extends ViewModel {
-    private GetUserUseCase getUser;
+    private final GetUserUseCase getUser;
     private final UpdateUserUseCase updateUser;
-
     private final MutableLiveData<Integer> userId = new MutableLiveData<>();
-
-    public final LiveData<UserEntity> user = Transformations.switchMap(userId, getUser::execute);
+    public final LiveData<UserEntity> user;
 
     @Inject
-    public ProfileViewModel(GetUserUseCase g, UpdateUserUseCase u) {
-        this.getUser    = g;
-        this.updateUser = u;
+    public ProfileViewModel(GetUserUseCase getUser, UpdateUserUseCase updateUser) {
+        this.getUser = getUser;
+        this.updateUser = updateUser;
+
+        // Инициализируем user после установки getUser
+        user = Transformations.switchMap(userId, id -> this.getUser.execute(id));
     }
 
     public void load(int id) {
@@ -32,17 +34,17 @@ public class ProfileViewModel extends ViewModel {
     }
 
     public void saveName(String name, UserEntity current) {
-        current.name = name;
+        current.setName(name);
         updateUser.execute(current);
     }
 
     public void saveDescription(String desc, UserEntity current) {
-        current.description = desc;
+        current.setDescription(desc);
         updateUser.execute(current);
     }
 
     public void savePhotoUri(String uri, UserEntity current) {
-        current.photoUri = uri;
+        current.setPhotoUri(uri);
         updateUser.execute(current);
     }
 }

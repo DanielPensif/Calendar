@@ -15,31 +15,48 @@ import java.util.List;
 @Dao
 public interface UserDao {
 
-    // Найти пользователя по email/username
+    // ——— LiveData для UI ———
+
+    /** LiveData: один пользователь по username (email) */
     @Query("SELECT * FROM users WHERE username = :username LIMIT 1")
     LiveData<UserEntity> getUserByUsernameLiveData(String username);
 
-    // Получить пользователя по id (LiveData)
+    /** LiveData: один пользователь по id */
     @Query("SELECT * FROM users WHERE id = :userId LIMIT 1")
     LiveData<UserEntity> getUserByIdLiveData(int userId);
 
-    // Все пользователи (например, админская выборка) – не обязательно, но может пригодиться
+    /** LiveData: все пользователи */
     @Query("SELECT * FROM users")
     LiveData<List<UserEntity>> getAllUsersLiveData();
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(UserEntity user);
+    // ——— Синхронные методы для UseCase/репозиториев ———
 
-    @Update
-    void update(UserEntity user);
+    /** Синхронно вернуть одного пользователя по id (или null) */
+    @Query("SELECT * FROM users WHERE id = :userId LIMIT 1")
+    UserEntity getById(int userId);
 
-    @Delete
-    void delete(UserEntity user);
+    /** Синхронно вернуть одного пользователя по username (или null) */
     @Query("SELECT * FROM users WHERE username = :username LIMIT 1")
-    UserEntity getUserByUsername(String username);
-    @Query("SELECT * FROM users WHERE username = :username")
     UserEntity getByUsername(String username);
 
-    @Query("SELECT * FROM users WHERE id = :id")
-    UserEntity getById(int id);
+    /**
+     * Вставить или заменить пользователя.
+     * Возвращает сгенерированный ROWID (id) — нужно для insertSync в репозитории.
+     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    long insert(UserEntity user);
+
+    /**
+     * Обновить пользователя.
+     * Возвращает количество изменённых строк (может быть 0, если запись не найдена).
+     */
+    @Update
+    int update(UserEntity user);
+
+    /**
+     * Удалить пользователя.
+     * Возвращает количество удалённых строк.
+     */
+    @Delete
+    int delete(UserEntity user);
 }

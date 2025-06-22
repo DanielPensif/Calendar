@@ -96,9 +96,9 @@ public class DayRepository {
         DayEntity d = dayDao.getByTimestampAndCalendarId(timestamp, calendarId);
         if (d == null) {
             d = new DayEntity();
-            d.timestamp = timestamp;
-            d.calendarId = calendarId;
-            d.id = (int) dayDao.insert(d);
+            d.setTimestamp(timestamp);
+            d.setCalendarId(calendarId);
+            d.setId((int) dayDao.insert(d));
         }
         return d;
     }
@@ -106,7 +106,7 @@ public class DayRepository {
         List<TaskEntity> out = new ArrayList<>();
         List<DayEntity> days = dayDao.getByTimestampAndCalendarIds(dayStartTs, calendarIds);
         for (DayEntity d : days) {
-            out.addAll(taskDao.getTasksForDay(d.id));
+            out.addAll(taskDao.getTasksForDay(d.getId()));
         }
         return out;
     }
@@ -117,7 +117,7 @@ public class DayRepository {
         // 1) оригинальные
         List<DayEntity> days = dayDao.getByTimestampAndCalendarIds(dayStartTs, calendarIds);
         for (DayEntity d : days) {
-            for (EventEntity e : eventDao.getEventsForDay(d.id)) {
+            for (EventEntity e : eventDao.getEventsForDay(d.getId())) {
                 out.add(e);
                 seen.add(e.id);
             }
@@ -133,7 +133,7 @@ public class DayRepository {
             if (seen.contains(e.id) || e.repeatRule == null || e.repeatRule.isEmpty()) continue;
             DayEntity base = dayDao.getById(e.dayId);
             if (base == null) continue;
-            LocalDate startDate = Instant.ofEpochMilli(base.timestamp)
+            LocalDate startDate = Instant.ofEpochMilli(base.getTimestamp())
                     .atZone(ZoneId.systemDefault())
                     .toLocalDate();
             if (EventUtils.occursOnDate(e, targetDate, startDate)) {

@@ -29,6 +29,9 @@ import org.threeten.bp.LocalDate;
 import org.threeten.bp.ZoneId;
 import java.util.*;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class AddTaskDialogFragment extends BottomSheetDialogFragment {
     private static final String ARG_DATE="date", ARG_EDIT="editTaskId";
     private LocalDate date;
@@ -105,12 +108,12 @@ public class AddTaskDialogFragment extends BottomSheetDialogFragment {
                     etTitle.setText(t.title);
                     etComment.setText(t.comment);
                     for(int i=0;i<cats.size();i++)
-                        if(cats.get(i).name.equals(t.category)) spCat.setSelection(i);
+                        if(cats.get(i).getName().equals(t.category)) spCat.setSelection(i);
                     cbRem.setChecked(t.reminderEnabled);
                     tpRem.setHour(t.reminderHour);
                     tpRem.setMinute(t.reminderMinute);
                     for(int i=0;i<cals.size();i++)
-                        if(cals.get(i).id==t.calendarId) spCal.setSelection(i);
+                        if(cals.get(i).getId()==t.calendarId) spCal.setSelection(i);
                 });
             }).start();
         }
@@ -123,7 +126,7 @@ public class AddTaskDialogFragment extends BottomSheetDialogFragment {
         String title=etTitle.getText().toString().trim();
         if(title.isEmpty()){ Toast.makeText(getContext(),"Введите название",Toast.LENGTH_SHORT).show();return;}
         CategoryEntity cat=(CategoryEntity)spCat.getSelectedItem();
-        int calId=cals.get(spCal.getSelectedItemPosition()).id;
+        int calId=cals.get(spCal.getSelectedItemPosition()).getId();
         boolean rem=cbRem.isChecked();
         int hr=tpRem.getHour(), mn=tpRem.getMinute();
         String comment=etComment.getText().toString();
@@ -132,9 +135,9 @@ public class AddTaskDialogFragment extends BottomSheetDialogFragment {
             DayEntity day=db.dayDao().getByTimestampAndCalendarId(ts,calId);
             if(day==null){
                 day=new DayEntity();
-                day.timestamp=ts;
-                day.calendarId=calId;
-                day.id=(int)db.dayDao().insert(day);
+                day.setTimestamp(ts);
+                day.setCalendarId(calId);
+                day.setId((int)db.dayDao().insert(day));
             }
             TaskEntity task = editingId!=null
                     ? db.taskDao().getById(editingId)
@@ -143,8 +146,8 @@ public class AddTaskDialogFragment extends BottomSheetDialogFragment {
 
             task.title=title;
             task.comment=comment;
-            task.category=cat.name;
-            task.dayId=day.id;
+            task.category=cat.getName();
+            task.dayId=day.getId();
             task.calendarId=calId;
             task.reminderEnabled=rem;
             task.reminderHour=hr;

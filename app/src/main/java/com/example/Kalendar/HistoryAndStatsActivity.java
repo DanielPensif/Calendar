@@ -58,6 +58,10 @@ public class HistoryAndStatsActivity extends AppCompatActivity {
         // UI
         Toolbar toolbar = findViewById(R.id.toolbarStats);
         setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
         toolbar.setNavigationOnClickListener(v -> finish());
 
         lineChart = findViewById(R.id.lineChart);

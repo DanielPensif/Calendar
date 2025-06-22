@@ -1,7 +1,9 @@
 package com.example.Kalendar.fragments;
 
 import android.os.Bundle;
-import android.view.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Spinner;
 
@@ -12,8 +14,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.Kalendar.R;
-import com.example.Kalendar.adapters.EventAdapter;
 import com.example.Kalendar.adapters.CategorySpinnerAdapter;
+import com.example.Kalendar.adapters.EventAdapter;
 import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.models.CategoryEntity;
 import com.example.Kalendar.viewmodel.EventsViewModel;
@@ -23,14 +25,17 @@ import org.threeten.bp.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class EventsFragment extends Fragment {
     private static final String ARG_DATE = "date";
 
     public static EventsFragment newInstance(LocalDate date) {
         EventsFragment f = new EventsFragment();
-        Bundle b = new Bundle();
-        b.putString(ARG_DATE, date.toString());
-        f.setArguments(b);
+        Bundle args = new Bundle();
+        args.putString(ARG_DATE, date.toString());
+        f.setArguments(args);
         return f;
     }
 
@@ -41,42 +46,41 @@ public class EventsFragment extends Fragment {
     private final List<CategoryEntity> categories = new ArrayList<>();
 
     @Nullable @Override
-    public View onCreateView(
-            @NonNull LayoutInflater inf,
-            @Nullable ViewGroup ct,
-            @Nullable Bundle bs
-    ) {
-        View v = inf.inflate(R.layout.fragment_events, ct, false);
+    public View onCreateView(@NonNull LayoutInflater inf, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View v = inf.inflate(R.layout.fragment_events, container, false);
 
+        // RecyclerView
         RecyclerView rv = v.findViewById(R.id.eventsRecycler);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new EventAdapter(requireContext(), new ArrayList<>());
         rv.setAdapter(adapter);
 
+        // Spinner категорий
         spCategory = v.findViewById(R.id.categoryFilter);
         catAdapter = new CategorySpinnerAdapter(
-                requireContext(), categories,
+                requireContext(),
+                categories,
                 null,
                 SessionManager.getLoggedInUserId(requireContext()),
                 () -> catAdapter.notifyDataSetChanged()
         );
         spCategory.setAdapter(catAdapter);
         spCategory.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View w, int pos, long id) {
-                vm.setCategory(p.getItemAtPosition(pos).toString());
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+                vm.setCategory(parent.getItemAtPosition(pos).toString());
             }
-            @Override public void onNothingSelected(AdapterView<?> p){}
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
         });
 
+        // ViewModel
         vm = new ViewModelProvider(this).get(EventsViewModel.class);
         LocalDate date = LocalDate.parse(getArguments().getString(ARG_DATE));
         vm.setDate(date);
         vm.setCalendarId(-1);
         vm.setCategory("Все");
 
-        vm.events.observe(getViewLifecycleOwner(), list -> {
-            adapter.updateEvents(list);
-        });
+        // Подписка на данные
+        vm.events.observe(getViewLifecycleOwner(), list -> adapter.updateEvents(list));
 
         return v;
     }

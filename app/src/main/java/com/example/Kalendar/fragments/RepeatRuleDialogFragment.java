@@ -23,6 +23,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class RepeatRuleDialogFragment extends DialogFragment {
 
     public interface OnRepeatSelectedListener {

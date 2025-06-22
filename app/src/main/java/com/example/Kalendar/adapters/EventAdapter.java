@@ -93,7 +93,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.ViewHolder> 
                 long ts = AppDatabase.getDatabase(ctx)
                         .dayDao()
                         .getById(e.dayId)
-                        .timestamp;
+                        .getTimestamp();
                 LocalDate date = Instant.ofEpochMilli(ts)
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate();

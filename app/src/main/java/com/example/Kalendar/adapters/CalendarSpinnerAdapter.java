@@ -47,10 +47,10 @@ public class CalendarSpinnerAdapter extends ArrayAdapter<CalendarEntity> {
 
         CalendarEntity calendar = calendars.get(position);
         if (calendar != null) {
-            text.setText(calendar.title);
+            text.setText(calendar.getTitle());
             GradientDrawable drawable = new GradientDrawable();
             drawable.setShape(GradientDrawable.OVAL);
-            drawable.setColor(Color.parseColor(calendar.colorHex));
+            drawable.setColor(Color.parseColor(calendar.getColorHex()));
             colorCircle.setBackground(drawable);
         } else {
             text.setText("Все календари");

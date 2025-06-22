@@ -20,7 +20,7 @@ import com.example.Kalendar.models.EventEntity;
 import com.example.Kalendar.models.TaskEntity;
 import com.example.Kalendar.models.UserEntity;
 
-@Database(entities = {DayEntity.class, TaskEntity.class, EventEntity.class, CalendarEntity.class, UserEntity.class, CategoryEntity.class}, version = 3)
+@Database(entities = {DayEntity.class, TaskEntity.class, EventEntity.class, CalendarEntity.class, UserEntity.class, CategoryEntity.class}, version = 2)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase INSTANCE;

@@ -34,7 +34,7 @@ public class GetTasksForDateUseCase {
         MutableLiveData<List<TaskEntity>> live = new MutableLiveData<>();
         exec.execute(() -> {
             long ts = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
-            int dayId = dayRepo.getOrCreateDaySync(ts, calendarId).id;
+            int dayId = dayRepo.getOrCreateDaySync(ts, calendarId).getId();
             List<TaskEntity> list = taskRepo.getTasksForDaySync(dayId);
             live.postValue(list);
         });

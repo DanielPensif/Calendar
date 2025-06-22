@@ -20,6 +20,9 @@ import org.threeten.bp.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Objects;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class DayDetailsActivity extends AppCompatActivity {
 
     private LocalDate selectedDate;
@@ -34,8 +37,10 @@ public class DayDetailsActivity extends AppCompatActivity {
         // toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        Objects.requireNonNull(getSupportActionBar())
-                .setDisplayHomeAsUpEnabled(true);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
         toolbar.setNavigationOnClickListener(v -> finish());
 
         // дата

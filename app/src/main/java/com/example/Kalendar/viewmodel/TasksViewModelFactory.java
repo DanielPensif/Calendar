@@ -9,6 +9,7 @@ import com.example.Kalendar.repository.TaskRepository;
 
 import javax.inject.Inject;
 
+
 public class TasksViewModelFactory implements ViewModelProvider.Factory {
     private final LoadTasksUseCase useCase;
 

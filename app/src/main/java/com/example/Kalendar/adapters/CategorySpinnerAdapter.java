@@ -52,7 +52,7 @@ public class CategorySpinnerAdapter extends BaseAdapter {
 
     @Override public int getCount() { return categories.size(); }
     @Override public Object getItem(int position) { return categories.get(position); }
-    @Override public long getItemId(int position) { return categories.get(position).id; }
+    @Override public long getItemId(int position) { return categories.get(position).getId(); }
 
     @Override public View getView(int position, View convertView, ViewGroup parent) {
         return createView(position, parent);
@@ -75,12 +75,12 @@ public class CategorySpinnerAdapter extends BaseAdapter {
         btnDelete.setFocusable(false);
 
         @SuppressLint("UseCompatLoadingForDrawables") Drawable d = Objects.requireNonNull(context.getDrawable(R.drawable.flag_circle)).mutate();
-        d.setTint(Color.parseColor(cat.color));
+        d.setTint(Color.parseColor(cat.getColor()));
         flag.setBackground(d);
 
-        name.setText(cat.name);
+        name.setText(cat.getName());
 
-        boolean isDefault = "Без категории".equals(cat.name);
+        boolean isDefault = "Без категории".equals(cat.getName());
         btnEdit.setVisibility(isDefault ? View.GONE : View.VISIBLE);
         btnDelete.setVisibility(isDefault ? View.GONE : View.VISIBLE);
 
@@ -101,9 +101,9 @@ public class CategorySpinnerAdapter extends BaseAdapter {
 
         EditText input = new EditText(context);
         input.setHint("Название");
-        if (toEdit != null) input.setText(toEdit.name);
+        if (toEdit != null) input.setText(toEdit.getName());
 
-        final String[] selectedColor = { toEdit != null ? toEdit.color : "#808080" };
+        final String[] selectedColor = { toEdit != null ? toEdit.getColor() : "#808080" };
         Button colorBtn = new Button(context);
         colorBtn.setText("Выбрать цвет");
         colorBtn.setBackgroundColor(Color.parseColor(selectedColor[0]));
@@ -142,7 +142,7 @@ public class CategorySpinnerAdapter extends BaseAdapter {
             }
             new Thread(() -> {
                 CategoryEntity existing = db.categoryDao().getByNameAndUserId(title, userId);
-                if (existing != null && (toEdit == null || existing.id != toEdit.id)) {
+                if (existing != null && (toEdit == null || existing.getId() != toEdit.getId())) {
                     new Handler(Looper.getMainLooper()).post(() ->
                             Toast.makeText(context, "Категория уже существует", Toast.LENGTH_SHORT).show()
                     );
@@ -150,8 +150,8 @@ public class CategorySpinnerAdapter extends BaseAdapter {
                 }
                 if (toEdit == null) db.categoryDao().insert(new CategoryEntity(title, selectedColor[0], userId));
                 else {
-                    toEdit.name = title;
-                    toEdit.color = selectedColor[0];
+                    toEdit.setName(title);
+                    toEdit.setColor(selectedColor[0]);
                     db.categoryDao().update(toEdit);
                 }
                 loadCategories();
@@ -165,7 +165,7 @@ public class CategorySpinnerAdapter extends BaseAdapter {
                 .setTitle("Удалить категорию?")
                 .setMessage("Все задачи и события перейдут в 'Без категории'.")
                 .setPositiveButton("Удалить", (d, w) -> new Thread(() -> {
-                    String oldName = cat.name;
+                    String oldName = cat.getName();
                     db.categoryDao().delete(cat);
                     db.categoryDao().reassignToDefault(oldName, userId);
                     loadCategories();
@@ -179,7 +179,7 @@ public class CategorySpinnerAdapter extends BaseAdapter {
             List<CategoryEntity> list = db.categoryDao().getAllForUser(userId);
             int defId = db.categoryDao().getDefaultCategoryId(userId);
             CategoryEntity defaultCat = new CategoryEntity("Без категории", "#808080", userId);
-            defaultCat.id = defId;
+            defaultCat.setId(defId);
 
             categories.clear();
             categories.add(defaultCat);

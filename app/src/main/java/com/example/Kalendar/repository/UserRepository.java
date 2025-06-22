@@ -22,13 +22,30 @@ public class UserRepository {
         this.ioExecutor = ioExecutor;
     }
 
+    // Асинхронная LiveData для UI
     public LiveData<UserEntity> getUserByUsername(String username) {
         return userDao.getUserByUsernameLiveData(username);
     }
+
     public LiveData<UserEntity> getUser(int userId) {
         return userDao.getUserByIdLiveData(userId);
     }
 
+    // Синхронный метод для UseCase
+    public UserEntity getByIdSync(int userId) {
+        return userDao.getById(userId);
+    }
+
+    public UserEntity getByUsernameSync(String username) {
+        return userDao.getByUsername(username);
+    }
+
+    // Синхронная вставка, возвращает сгенерированный id или брошенное исключение
+    public long insertSync(UserEntity user) {
+        return userDao.insert(user);
+    }
+
+    // Оставляем ваши асинхронные обёртки для UI, если нужно
     public void insert(UserEntity user) {
         ioExecutor.execute(() -> userDao.insert(user));
     }

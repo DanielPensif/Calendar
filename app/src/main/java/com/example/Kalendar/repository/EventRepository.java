@@ -83,12 +83,12 @@ public class EventRepository {
             Set<Integer> seen = new HashSet<>();
 
             for (DayEntity d : days) {
-                if (calendarId != -1 && d.calendarId != calendarId) continue;
-                List<EventEntity> evs = eventDao.getEventsForDay(d.id);
+                if (calendarId != -1 && d.getCalendarId() != calendarId) continue;
+                List<EventEntity> evs = eventDao.getEventsForDay(d.getId());
                 for (EventEntity e : evs) {
                     boolean occurs = true;
                     if (e.repeatRule != null && !e.repeatRule.isEmpty()) {
-                        LocalDate startDate = Instant.ofEpochMilli(d.timestamp)
+                        LocalDate startDate = Instant.ofEpochMilli(d.getTimestamp())
                                 .atZone(ZoneId.systemDefault())
                                 .toLocalDate();
                         occurs = EventUtils.occursOnDate(e, date, startDate);
@@ -108,7 +108,7 @@ public class EventRepository {
 
                 DayEntity base = dayDao.getById(e.dayId);
                 if (base == null) continue;
-                LocalDate startDate = Instant.ofEpochMilli(base.timestamp)
+                LocalDate startDate = Instant.ofEpochMilli(base.getTimestamp())
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate();
                 if (EventUtils.occursOnDate(e, date, startDate)) {

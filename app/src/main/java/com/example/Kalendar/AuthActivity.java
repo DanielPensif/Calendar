@@ -3,16 +3,18 @@ package com.example.Kalendar;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
-import androidx.appcompat.app.AlertDialog;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.Kalendar.adapters.SessionManager;
 import com.example.Kalendar.fragments.LoginFragment;
 import com.example.Kalendar.fragments.RegisterFragment;
-import com.example.Kalendar.viewmodel.AuthViewModel;
 import com.example.Kalendar.utils.BiometricHelper;
+import com.example.Kalendar.viewmodel.AuthViewModel;
+
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
@@ -21,6 +23,7 @@ public class AuthActivity extends AppCompatActivity
         RegisterFragment.OnRegisterSuccessListener {
 
     private AuthViewModel viewModel;
+    private AlertDialog biometricDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,26 +35,38 @@ public class AuthActivity extends AppCompatActivity
 
         int userId = SessionManager.getLoggedInUserId(this);
         if (userId != -1) {
-            if (!SessionManager.isBiometricAsked(this)) askUseBiometric();
-            else if (SessionManager.isBiometricEnabled(this)) promptBiometricAndEnter();
-            else startMain();
-        } else showLogin();
+            if (!SessionManager.isBiometricAsked(this)) {
+                askUseBiometric();
+            } else if (SessionManager.isBiometricEnabled(this)) {
+                promptBiometricAndEnter();
+            } else {
+                startMain();
+            }
+        } else {
+            showLogin();
+        }
     }
 
     private void observeViewModel() {
         viewModel.loginResult.observe(this, user -> {
             if (user != null) {
-                SessionManager.saveUser(this, user.id);
+                SessionManager.saveUser(this, user.getId());
                 onLoginSuccess();
             }
         });
         viewModel.registerResult.observe(this, success -> {
-            if (Boolean.TRUE.equals(success)) Toast.makeText(this, "Регистрация успешна!", Toast.LENGTH_SHORT).show();
+            if (Boolean.TRUE.equals(success)) {
+                Toast.makeText(this, "Регистрация успешна!", Toast.LENGTH_SHORT).show();
+            }
         });
-        viewModel.error.observe(this, msg -> Toast.makeText(this, msg, Toast.LENGTH_SHORT).show());
+        viewModel.error.observe(this, msg ->
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        );
     }
 
-    private void showLogin() { replaceFragment(new LoginFragment()); }
+    private void showLogin() {
+        replaceFragment(new LoginFragment());
+    }
 
     private void replaceFragment(Fragment f) {
         getSupportFragmentManager().beginTransaction()
@@ -60,19 +75,26 @@ public class AuthActivity extends AppCompatActivity
     }
 
     private void askUseBiometric() {
-        new AlertDialog.Builder(this)
+        biometricDialog = new AlertDialog.Builder(this)
                 .setTitle("Включить вход по биометрии?")
                 .setMessage("Хотите использовать отпечаток или код устройства для скрытия данных?")
-                .setPositiveButton("Да", (d,w) -> {
+                .setPositiveButton("Да", (d, w) -> {
+                    d.dismiss();
+                    biometricDialog = null;
                     SessionManager.setBiometricEnabled(this, true);
                     SessionManager.setBiometricAsked(this, true);
                     promptBiometricAndEnter();
                 })
-                .setNegativeButton("Нет", (d,w) -> {
+                .setNegativeButton("Нет", (d, w) -> {
+                    d.dismiss();
+                    biometricDialog = null;
                     SessionManager.setBiometricEnabled(this, false);
                     SessionManager.setBiometricAsked(this, true);
                     startMain();
-                }).setCancelable(false).show();
+                })
+                .setCancelable(false)
+                .create();
+        biometricDialog.show();
     }
 
     private void promptBiometricAndEnter() {
@@ -80,9 +102,26 @@ public class AuthActivity extends AppCompatActivity
     }
 
     private void startMain() {
-        startActivity(new Intent(this, MainActivity.class)); finish();
+        startActivity(new Intent(this, MainActivity.class));
+        finish();
     }
 
-    @Override public void onLoginSuccess() { askUseBiometric(); }
-    @Override public void onRegisterSuccess() { showLogin(); }
+    @Override
+    public void onLoginSuccess() {
+        askUseBiometric();
+    }
+
+    @Override
+    public void onRegisterSuccess() {
+        showLogin();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (biometricDialog != null && biometricDialog.isShowing()) {
+            biometricDialog.dismiss();
+            biometricDialog = null;
+        }
+    }
 }

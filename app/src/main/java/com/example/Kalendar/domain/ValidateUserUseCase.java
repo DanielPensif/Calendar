@@ -1,29 +1,26 @@
 package com.example.Kalendar.domain;
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Transformations;
-import androidx.lifecycle.ViewModel;
 import com.example.Kalendar.models.UserEntity;
 import com.example.Kalendar.repository.UserRepository;
-import com.example.Kalendar.utils.PasswordUtils;
-import dagger.hilt.android.scopes.ViewModelScoped;
+
 import javax.inject.Inject;
+
+import dagger.hilt.android.scopes.ViewModelScoped;
 
 @ViewModelScoped
 public class ValidateUserUseCase {
-    private final UserRepository repo;
+    private final UserRepository userRepo;
 
     @Inject
-    public ValidateUserUseCase(UserRepository repo) {
-        this.repo = repo;
+    public ValidateUserUseCase(UserRepository userRepo) {
+        this.userRepo = userRepo;
     }
-    public LiveData<UserEntity> execute(String username, String password) {
-        LiveData<UserEntity> source = repo.getUserByUsername(username);
-        return Transformations.map(source, user -> {
-            if (user != null && PasswordUtils.hash(password).equals(user.passwordHash)) {
-                return user;
-            }
-            return null;
-        });
+
+    public UserEntity execute(String username, String passwordHash) {
+        UserEntity user = userRepo.getByUsernameSync(username);
+        if (user != null && passwordHash.equals(user.getPasswordHash())) {
+            return user;
+        }
+        return null;
     }
 }
