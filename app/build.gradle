@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
 }
+apply plugin: 'dagger.hilt.android.plugin'
 
 android {
     namespace 'com.example.Kalendar'
@@ -22,6 +23,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -29,41 +31,34 @@ android {
 }
 
 dependencies {
-    implementation libs.room.common.jvm
     def room_version = "2.6.1"
-
     implementation "androidx.room:room-runtime:$room_version"
     annotationProcessor "androidx.room:room-compiler:$room_version"
+
     implementation libs.okhttp
-    implementation 'com.google.code.gson:gson:2.8.9'
-    implementation 'com.jakewharton.threetenabp:threetenabp:1.4.4'
+    implementation libs.gson
+    implementation libs.threetenabp
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
-    implementation 'com.github.QuadFlask:colorpicker:0.0.15'
-    implementation "androidx.biometric:biometric:1.1.0"
-    implementation 'com.github.bumptech.glide:glide:4.15.1'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.15.1'
+    implementation libs.colorpicker
+    implementation libs.biometric
+    implementation libs.github.glide
+    annotationProcessor libs.compiler
 
-    // AppCompat, Material
-    implementation 'androidx.appcompat:appcompat:1.5.1'
-    implementation 'com.google.android.material:material:1.7.0'
-
-    // Lifecycle (ViewModel + LiveData)
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.5.0"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.5.0"
-
-    // Navigation Component
-    implementation "androidx.navigation:navigation-fragment-ktx:2.5.2"
-    implementation "androidx.navigation:navigation-ui-ktx:2.5.2"
-
-    // Hilt
-    implementation "com.google.dagger:hilt-android:2.44"
-    implementation "androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha03"
+    implementation libs.hilt.android
+    annotationProcessor libs.hilt.compiler
 
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
     implementation libs.constraintlayout
+
+    implementation "androidx.lifecycle:lifecycle-viewmodel:2.9.1"
+    implementation "androidx.lifecycle:lifecycle-livedata:2.9.1"
+    implementation "androidx.lifecycle:lifecycle-runtime:2.9.1"
+
+    implementation "androidx.navigation:navigation-fragment-ktx:2.9.0"
+    implementation "androidx.navigation:navigation-ui-ktx:2.9.0"
+
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

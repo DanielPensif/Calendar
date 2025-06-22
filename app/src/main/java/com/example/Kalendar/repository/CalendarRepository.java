@@ -52,7 +52,7 @@ public class CalendarRepository {
         return calendarDao.getAllForUser(userId);
     }
     public LiveData<List<CalendarEntity>> getCalendarsForUser(int userId) {
-        return calendarDao.getByUserIdLiveData(userId);
+        return calendarDao.getCalendarsForUserLiveData(userId);
     }
 
     public CalendarEntity getByTitleAndUserIdSync(String title, int userId) {
@@ -64,10 +64,10 @@ public class CalendarRepository {
     }
 
     public void updateCalendarSync(CalendarEntity calendar) {
-        calendarDao.updateSync(calendar);
+        calendarDao.update(calendar);
     }
 
     public void deleteCalendarSync(CalendarEntity calendar) {
-        calendarDao.deleteSync(calendar);
+        calendarDao.delete(calendar);
     }
 }
