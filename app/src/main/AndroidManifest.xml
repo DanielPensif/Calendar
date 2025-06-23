@@ -33,6 +33,15 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="false" />
+        <activity
+            android:name=".SettingsStyleActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SettingsNotificationsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SettingsProfileActivity"
+            android:exported="false" />
 
         <activity
             android:name=".AuthActivity"
