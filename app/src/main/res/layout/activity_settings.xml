@@ -8,7 +8,7 @@
     android:background="@color/white"
     android:padding="24dp">
 
-    <!-- Fragment container (hidden behind other views) -->
+    <!-- Fragment container -->
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
@@ -27,7 +27,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Settings options cards -->
+    <!-- Notifications Card -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/notificationsCard"
         style="@style/Widget.Material3.CardView.Elevated"
@@ -61,6 +61,41 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- Security & Login Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/securityCard"
+        style="@style/Widget.Material3.CardView.Elevated"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:cardElevation="4dp"
+        app:layout_constraintTop_toBottomOf="@id/notificationsCard"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="16dp"
+                android:src="@drawable/ic_lock"/>
+
+            <TextView
+                android:id="@+id/securityButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Безопасность и вход"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="normal" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Style Card -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/styleCard"
         style="@style/Widget.Material3.CardView.Elevated"
@@ -68,7 +103,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         app:cardElevation="4dp"
-        app:layout_constraintTop_toBottomOf="@id/notificationsCard"
+        app:layout_constraintTop_toBottomOf="@id/securityCard"
         app:strokeWidth="1dp">
 
         <LinearLayout
@@ -94,6 +129,7 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- Profile Card -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/profileCard"
         style="@style/Widget.Material3.CardView.Elevated"
