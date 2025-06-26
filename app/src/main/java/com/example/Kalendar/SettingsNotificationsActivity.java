@@ -1,24 +1,26 @@
 package com.example.Kalendar;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.widget.CompoundButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import com.example.Kalendar.adapters.SessionManager;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 public class SettingsNotificationsActivity extends AppCompatActivity {
 
-    private static final int REQUEST_CODE_POST_NOTIFICATIONS = 1001;
+    private static final String CHANNEL_ID = "kalendar_channel_id";
+    private static final int NOTIFICATION_ID = 1;
     private SwitchMaterial notificationSwitch;
 
     @Override
@@ -26,82 +28,85 @@ public class SettingsNotificationsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings_notifications);
 
-        // Проверка авторизации
-        if (SessionManager.getLoggedInUserId(this) == -1) {
-            finish();
-            return;
-        }
+        createNotificationChannel();
+        initViews();
+    }
 
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Календарь уведомлений",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    private void initViews() {
         notificationSwitch = findViewById(R.id.notificationSwitch);
 
-        // Установка начального состояния switch (можно загрузить из SharedPreferences)
-        boolean notificationsEnabled = checkNotificationPermission();
-        notificationSwitch.setChecked(notificationsEnabled);
-
-        // Обработчик изменения состояния switch
-        notificationSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    requestNotificationPermissionIfNeeded();
-                    Toast.makeText(SettingsNotificationsActivity.this,
-                            "Уведомления вкючены", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(SettingsNotificationsActivity.this,
-                            "Уведомления отключены", Toast.LENGTH_SHORT).show();
-                }
+        notificationSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                checkAndRequestNotificationPermission();
+            } else {
+                cancelNotification();
             }
         });
     }
 
-    private boolean checkNotificationPermission() {
+    private void checkAndRequestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
-        }
-        return true; // Для версий ниже Android 13 разрешение не требуется
-    }
-
-    private void requestNotificationPermissionIfNeeded() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                        Manifest.permission.POST_NOTIFICATIONS)) {
-                    new AlertDialog.Builder(this)
-                            .setTitle("Разрешить уведомления?")
-                            .setMessage("Чтобы получать напоминания о задачах, разрешите уведомления")
-                            .setPositiveButton("Разрешить", (d, w) -> requestNotificationPermission())
-                            .setNegativeButton("Отмена", (d, w) -> notificationSwitch.setChecked(false))
-                            .show();
-                } else {
-                    requestNotificationPermission();
-                }
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_ID
+                );
+            } else {
+                showTestNotification();
             }
+        } else {
+            showTestNotification();
         }
     }
 
-    private void requestNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.POST_NOTIFICATIONS},
-                    REQUEST_CODE_POST_NOTIFICATIONS);
+    private void showTestNotification() {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("Тестовое уведомление")
+                .setContentText("Уведомления включены")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true);
+
+        NotificationManagerCompat manager = NotificationManagerCompat.from(this);
+        try {
+            manager.notify(NOTIFICATION_ID, builder.build());
+            Toast.makeText(this, "Тестовое уведомление отправлено", Toast.LENGTH_SHORT).show();
+        } catch (SecurityException e) {
+            Toast.makeText(this, "Ошибка: нет разрешения на уведомления", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void cancelNotification() {
+        NotificationManagerCompat manager = NotificationManagerCompat.from(this);
+        manager.cancel(NOTIFICATION_ID);
+        Toast.makeText(this, "Уведомления выключены", Toast.LENGTH_SHORT).show();
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE_POST_NOTIFICATIONS) {
+        if (requestCode == NOTIFICATION_ID) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Уведомления включены", Toast.LENGTH_SHORT).show();
-                notificationSwitch.setChecked(true);
+                showTestNotification();
             } else {
-                Toast.makeText(this, "Уведомления запрещены", Toast.LENGTH_SHORT).show();
                 notificationSwitch.setChecked(false);
+                Toast.makeText(this, "Разрешение не получено", Toast.LENGTH_SHORT).show();
             }
         }
     }
